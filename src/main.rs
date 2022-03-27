@@ -1,6 +1,7 @@
 use std::path::Path;
 use clap::{Arg, Command};
 use resync::sync;
+use resync::info;
 
 fn main() {
     let matches = Command::new("Resync")
@@ -39,5 +40,17 @@ fn main() {
         println!("synced");
         println!("Value of config {}", "hi");
     }
+
+    if matches.is_present("info") {
+        match info::get_line_info(working_dir, Path::new("myFile.txt")) {
+            Ok(lines) => {
+                println!("succesfully got blame");
+            }
+            Err(e) => {
+                println!("Error blaming {}", e);
+            }
+        }
+    }
+
     println!("Hello, world!");
 }
