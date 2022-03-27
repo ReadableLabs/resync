@@ -17,46 +17,29 @@
  * your uncommited changes without impacting HEAD the current branch, or the Git index.
  *
  * https://github.com/tkellogg/dura
+ * Commit: 4948b965e81aa8cbba02737dca41f218b5b22956
  *
  * Changes
- *
+ * - Removed output
  * - Changed occurences of "dura" to "resync"
  * - Changed "capture" function name to "sync"
- * - Removed function "is_repo"
+ * - Removed function "is_repo", "get_git_author", and "get_git_email"
+ * - Renamed from "snapshot.rs" to "sync.rs"
+ * - Changed return type from CaptureStatus to boolean
+ * - Removed config using
 */
 
 use git2::{BranchType, DiffOptions, Error, IndexAddOption, Repository, Signature};
-use serde::{Deserialize, Serialize};
-use std::fmt;
 use std::path::Path;
 
-use crate::config::Config;
-
-#[derive(Debug, Serialize, Deserialize, Eq, PartialEq)]
-pub struct CaptureStatus {
-    pub dura_branch: String,
-    pub commit_hash: String,
-    pub base_hash: String,
-}
-
-impl fmt::Display for CaptureStatus {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "resync: {}, commit_hash: {}, base: {}",
-            self.dura_branch, self.commit_hash, self.base_hash
-        )
-    }
-}
-
-pub fn sync(path: &Path) -> Result<Option<CaptureStatus>, Error> {
+pub fn sync(path: &Path) -> Result<String, Error> {
     let repo = Repository::open(path)?;
     let head = repo.head()?.peel_to_commit()?;
     let message = "resync auto-sync";
 
     // status check
     if repo.statuses(None)?.is_empty() {
-        return Ok(None);
+        return Ok(head.id().to_string());
     }
 
     let branch_name = format!("resync/{}", head.id());
@@ -84,7 +67,7 @@ pub fn sync(path: &Path) -> Result<Option<CaptureStatus>, Error> {
         Some(DiffOptions::new().include_untracked(true)),
     )?;
     if dirty_diff.deltas().len() == 0 {
-        return Ok(None);
+        return Ok(head.id().to_string());
     }
 
     let tree_oid = index.write_tree()?;
@@ -93,7 +76,7 @@ pub fn sync(path: &Path) -> Result<Option<CaptureStatus>, Error> {
         repo.branch(branch_name.as_str(), &head, false)?;
     }
 
-    let committer = Signature::now(&get_git_author(&repo), &get_git_email(&repo))?;
+    let committer = Signature::now("resync", "support@readable.so")?;
     let oid = repo.commit(
         Some(&format!("refs/heads/{}", &branch_name)),
         &committer,
@@ -103,43 +86,5 @@ pub fn sync(path: &Path) -> Result<Option<CaptureStatus>, Error> {
         &[parent_commit],
     )?;
 
-    Ok(Some(CaptureStatus {
-        dura_branch: branch_name,
-        commit_hash: oid.to_string(),
-        base_hash: head.id().to_string(),
-    }))
-}
-
-fn get_git_author(repo: &Repository) -> String {
-    let dura_cfg = Config::load();
-    if let Some(value) = dura_cfg.commit_author {
-        return value;
-    }
-
-    if !dura_cfg.commit_exclude_git_config {
-        if let Ok(git_cfg) = repo.config() {
-            if let Ok(value) = git_cfg.get_string("user.name") {
-                return value;
-            }
-        }
-    }
-
-    "dura".to_string()
-}
-
-fn get_git_email(repo: &Repository) -> String {
-    let dura_cfg = Config::load();
-    if let Some(value) = dura_cfg.commit_email {
-        return value;
-    }
-
-    if !dura_cfg.commit_exclude_git_config {
-        if let Ok(git_cfg) = repo.config() {
-            if let Ok(value) = git_cfg.get_string("user.email") {
-                return value;
-            }
-        }
-    }
-
-    "support@readable.so".to_string()
+    Ok(oid.to_string())
 }
