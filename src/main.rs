@@ -80,6 +80,9 @@ fn main() {
         match info::get_line_info(working_dir, Path::new("myFile.txt")) {
             Ok(lines) => {
                 println!("succesfully got blame");
+                for (key, value) in lines {
+                    println!("{}:{}", key, value);
+                }
             }
             Err(e) => {
                 println!("Error blaming {}", e);

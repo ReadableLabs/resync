@@ -3,8 +3,8 @@ use std::io::{BufRead, BufReader};
 use std::path::Path;
 use git2::{Repository, Blame, BlameOptions, Error, BranchType};
 
-pub fn get_line_info(path: &Path, file: &Path) -> Result<HashMap<i32, i32>, Error> { // TODO: make blame oldest and newest commit be equivalent to head id passed in
-    let mut lines: HashMap<i32, i32> = HashMap::new();
+pub fn get_line_info(path: &Path, file: &Path) -> Result<HashMap<u32, u64>, Error> { // TODO: make blame oldest and newest commit be equivalent to head id passed in
+    let mut lines: HashMap<u32, u64> = HashMap::new();
 
     let repo = Repository::open(path)?;
     let head = repo.head()?.peel_to_commit()?;
@@ -36,8 +36,10 @@ pub fn get_line_info(path: &Path, file: &Path) -> Result<HashMap<i32, i32>, Erro
     let reader = BufReader::new(blob.content());
     for (i, line) in reader.lines().enumerate() {
         if let (Ok(line), Some(hunk)) = (line, blame.get_line(i + 1)) {
-            let id = hunk.final_commit_id();
-            println!("{}:{}", line, id);
+            let time = hunk.final_signature().when().seconds();
+            println!("{}:{}", line, time);
+            lines.insert(i.try_into().unwrap(), time.try_into().unwrap());
+            // could use softmax
         }
     }
 
