@@ -38,19 +38,25 @@ fn main() {
     //     }
 
     // }
+    /*
     let working_dir = match matches.value_of("dir") {
         Some(dir) => {
             println!("{}", dir);
-            dir
+            Path::new(dir)
             // Ok(dir);
         },
         None => {
             // Ok("");
+            let path = env::current_dir();
             println!("it be none");
-            "hi"
+            let path_path = path.as_path();
+            path_path
         },
     };
-    println!("{}", working_dir);
+    */
+    // Some
+    let working_dir = Path::new(matches.value_of("dir").unwrap_or("ok"));
+    println!("{}", working_dir.display());
     // let working_dir = Path::new(matches.value_of("dir").unwrap_or(&path.into_os_string().into_string().unwrap()));
 
     /*
