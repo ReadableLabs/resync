@@ -2,6 +2,8 @@ use std::path::Path;
 use clap::{Arg, Command};
 use resync::sync;
 use resync::info;
+use resync::parser::hex_color;
+use nom::Finish;
 
 fn main() {
     let matches = Command::new("Resync")
@@ -60,6 +62,8 @@ fn main() {
     // Some
     let working_dir = Path::new(matches.value_of("dir").unwrap_or("/home/nevin/Desktop/testinit"));
     println!("{}", working_dir.display());
+    let color = hex_color("#2F14DF").unwrap().1;
+    println!("{}", color.red);
     // let working_dir = Path::new(matches.value_of("dir").unwrap_or(&path.into_os_string().into_string().unwrap()));
 
     if matches.is_present("sync") {
