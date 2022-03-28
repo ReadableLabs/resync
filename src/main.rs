@@ -2,6 +2,7 @@ use std::path::Path;
 use clap::{Arg, Command};
 use resync::sync;
 use resync::info;
+use std::env;
 
 fn main() {
     let matches = Command::new("Resync")
@@ -11,7 +12,8 @@ fn main() {
         .arg(Arg::new("dir")
              .short('d')
              .long("dir")
-             .help("Sets the directory for resync to work in"))
+             .help("Sets the directory for resync to work in")
+             .takes_value(true))
         .arg(Arg::new("sync")
              .short('s')
              .long("sync")
@@ -26,8 +28,32 @@ fn main() {
              .help("Format designed for machine consumption"))
         .get_matches();
 
-    let working_dir = Path::new(matches.value_of("dir").unwrap_or("/home/nevin/Desktop/testinit"));
 
+    // let path = match env::current_dir() {
+    //     Ok(path) => {
+    //         println!(path.display());
+    //     }
+    //     Err(e) => {
+    //         println!("{}", e);
+    //     }
+
+    // }
+    let working_dir = match matches.value_of("dir") {
+        Some(dir) => {
+            println!("{}", dir);
+            dir
+            // Ok(dir);
+        },
+        None => {
+            // Ok("");
+            println!("it be none");
+            "hi"
+        },
+    };
+    println!("{}", working_dir);
+    // let working_dir = Path::new(matches.value_of("dir").unwrap_or(&path.into_os_string().into_string().unwrap()));
+
+    /*
     if matches.is_present("sync") {
         match sync::sync(working_dir) {
             Ok(result) => {
@@ -52,5 +78,6 @@ fn main() {
         }
     }
 
+    */
     println!("Hello, world!");
 }
