@@ -2,7 +2,6 @@ use std::path::Path;
 use clap::{Arg, Command};
 use resync::sync;
 use resync::info;
-use std::env;
 
 fn main() {
     let matches = Command::new("Resync")

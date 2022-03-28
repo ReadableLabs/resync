@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
-use git2::{Repository, Blame, BlameOptions, Error, BranchType};
+use git2::{Repository, BlameOptions, Error, BranchType};
 
 pub fn get_line_info(path: &Path, file: &Path) -> Result<HashMap<u32, u64>, Error> { // TODO: make blame oldest and newest commit be equivalent to head id passed in
     let mut lines: HashMap<u32, u64> = HashMap::new();
