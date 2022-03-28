@@ -1,12 +1,46 @@
 use std::collections::HashMap;
+use std::io::{BufRead, BufReader};
 use std::path::Path;
-use git2::{Repository, Blame, BlameOptions, Error};
+use git2::{Repository, Blame, BlameOptions, Error, BranchType};
 
 pub fn get_line_info(path: &Path, file: &Path) -> Result<HashMap<i32, i32>, Error> { // TODO: make blame oldest and newest commit be equivalent to head id passed in
     let mut lines: HashMap<i32, i32> = HashMap::new();
 
     let repo = Repository::open(path)?;
+    let head = repo.head()?.peel_to_commit()?;
+
+    let branch_name = format!("resync/{}", head.id());
+    let spec = format!("{}:{}", branch_name, file.display());
+
+    // println!("{}", spec);
+
+    let branch_oid = match repo.find_branch(&branch_name, BranchType::Local) {
+        Ok(branch) => {
+           match branch.get().peel_to_commit() {
+                Ok(commit) => {
+                    Some(commit.id())
+                },
+                _ => None
+            }
+        },
+        Err(_) => None // maybe this isn't good
+    };
     let mut blame_opts = BlameOptions::new();
+    blame_opts.oldest_commit(head.id()).newest_commit(*branch_oid.as_ref().unwrap_or(&head.id()));
+    println!("{}", branch_oid.as_ref().unwrap_or(&head.id()));
+
     let blame = repo.blame_file(file, Some(&mut blame_opts))?;
+    let object = repo.revparse_single(&spec[..])?;
+    let blob = repo.find_blob(object.id())?;
+
+    let reader = BufReader::new(blob.content());
+    for (i, line) in reader.lines().enumerate() {
+        if let (Ok(line), Some(hunk)) = (line, blame.get_line(i + 1)) {
+            let id = hunk.final_commit_id();
+            println!("{}:{}", line, id);
+        }
+    }
+
+
     return Ok(lines);
 }

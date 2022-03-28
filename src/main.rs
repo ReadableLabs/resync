@@ -26,6 +26,10 @@ fn main() {
              .short('p')
              .long("porcelain")
              .help("Format designed for machine consumption"))
+        .arg(Arg::new("m")
+             .short('m')
+             .long("user-master-branch")
+             .help("Whether or not to use master branch to get blame data"))
         .get_matches();
 
 
@@ -55,18 +59,17 @@ fn main() {
     };
     */
     // Some
-    let working_dir = Path::new(matches.value_of("dir").unwrap_or("ok"));
+    let working_dir = Path::new(matches.value_of("dir").unwrap_or("/home/nevin/Desktop/testinit"));
     println!("{}", working_dir.display());
     // let working_dir = Path::new(matches.value_of("dir").unwrap_or(&path.into_os_string().into_string().unwrap()));
 
-    /*
     if matches.is_present("sync") {
         match sync::sync(working_dir) {
             Ok(result) => {
-                println!("Succesfully synced, result {}", result);
+                println!("Succesfully synced. {}", result);
             }
             Err(e) => {
-                println!("Failed to sync, error {}", e);
+                println!("Failed to sync. {}", e);
             }
         }
         println!("synced");
@@ -84,6 +87,5 @@ fn main() {
         }
     }
 
-    */
     println!("Hello, world!");
 }

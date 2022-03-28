@@ -42,6 +42,7 @@ pub fn sync(path: &Path) -> Result<String, Error> {
         return Ok(head.id().to_string());
     }
 
+    // add cleanup function, which deletes old branches
     let branch_name = format!("resync/{}", head.id());
     let branch_commit = match repo.find_branch(&branch_name, BranchType::Local) {
         Ok(mut branch) => {
