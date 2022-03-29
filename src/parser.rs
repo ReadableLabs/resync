@@ -1,33 +1,31 @@
 use nom::{
     IResult,
-    bytes::complete::{tag, take_while_m_n},
-    combinator::map_res,
+    bytes::complete::{tag, take_while, take_until},
+    character::{is_hex_digit},
+    combinator::{map_res, value},
+    error::ParseError,
     sequence::tuple};
 use nom::bytes::complete::take;
+use std::str;
 
-pub struct Color {
-    pub red:    u8,
-    pub green:  u8,
-    pub blue:   u8,
+pub struct Color<'a> {
+    pub hashtag:    &'a str,
+    pub color:      &'a str,
 }
 
-fn from_hex(input: &str) -> Result<u8, std::num::ParseIntError> {
-    u8::from_str_radix(input, 16)
+pub fn get_fun_name(input: &[u8]) -> IResult<&[u8], &[u8]> {
+    tag("public")(input)
 }
 
-fn is_hex_digit(c: char) -> bool {
-    c.is_digit(16)
-}
-
-fn hex_primary(input: &str) -> IResult<&str, u8> {
-    map_res(
-        take_while_m_n(2, 2, is_hex_digit),
-        from_hex
-    )(input)
-}
-
-pub fn hex_color(input: &str) -> IResult<&str, Color> {
-    let (input, _) = tag("#")(input)?;
-    let (input, (red, green, blue)) = tuple((hex_primary, hex_primary, hex_primary))(input)?;
-    Ok((input, Color {red, green, blue}))
-}
+/*
+pub fn hex_color<'a, E: ParseError<&'a str>>(i: &'a str) -> IResult<&'a str, E> {
+    value(
+      (), // Output is thrown away.
+      tuple((
+        tag("(*"),
+        take_until("*)"),
+        tag("*)")
+      ))
+    )(i)
+  }
+*/
