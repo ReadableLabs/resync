@@ -7,6 +7,8 @@ use nom::{
     sequence::tuple};
 use nom::bytes::complete::take;
 use std::str;
+use nom_locate::LocatedSpan;
+type Span<'a> = LocatedSpan<&'a [u8]>;
 
 pub struct CStyleFunction<'a> {
     pub start:  &'a[u8],
