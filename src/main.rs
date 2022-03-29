@@ -63,8 +63,9 @@ fn main() {
     // Some
     let working_dir = Path::new(matches.value_of("dir").unwrap_or("/home/nevin/Desktop/testinit"));
     println!("{}", working_dir.display());
-    let hi = get_fun_name("public static void".as_bytes()).unwrap().1;
-    println!("{}", std::str::from_utf8(hi).unwrap());
+    let parsed = get_fun_name("main() {aaaa}".as_bytes()).unwrap();
+    println!("{}", std::str::from_utf8(parsed.1.start).unwrap());
+    // println!("{}", std::str::from_utf8(hi).unwrap());
     // let working_dir = Path::new(matches.value_of("dir").unwrap_or(&path.into_os_string().into_string().unwrap()));
 
     if matches.is_present("sync") {
