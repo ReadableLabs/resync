@@ -13,9 +13,9 @@ pub type Span<'a> = LocatedSpan<&'a [u8]>;
 
 pub struct CStyleFunction<'a> {
     pub position: Span<'a>,
-    pub start:  &'a[u8],
-    pub mid:    &'a[u8],
-    pub end:    &'a[u8],
+    pub start:  Span<'a>, // &'a[u8],
+    pub mid:    Span<'a>,
+    pub end:    Span<'a>,
  // output file name with : number for easy click
 }
 
@@ -31,7 +31,7 @@ pub fn get_fun_name(input: Span) -> IResult<Span, CStyleFunction> {
         tag("}")
     ))(input)?;
     */
-    Ok((input, CStyleFunction {position: pos, start: main.fragment(), mid: body.fragment(), end: end.fragment()}))
+    Ok((input, CStyleFunction {position: pos, start: main, mid: body, end: end}))
     // println!("{} {} {}", str::from_utf8( start).unwrap(), str::from_utf8(mid).unwrap(), str::from_utf8(end).unwrap());
     // tag("main")(input)
 }
