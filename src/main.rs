@@ -62,13 +62,17 @@ fn main() {
     };
     */
     // Some
+    
     let working_dir = Path::new(matches.value_of("dir").unwrap_or("/home/nevin/Desktop/testinit"));
     println!("{}", working_dir.display());
-    let parsed = get_fun_name(Span::new("main() {aaaa}".as_bytes())).unwrap();
-    let text = std::str::from_utf8(parsed.1.start.fragment()).unwrap();
+    let parsed = get_fun_name(Span::new("function main(adsjgsdalgjisadg) {\naaaa\nijdjsgiajsgioasg\n}".as_bytes())).unwrap();
+    let text = std::str::from_utf8(parsed.1.arg_start.fragment()).unwrap();
     println!("{}", text);
     // println!("{}", std::str::from_utf8(parsed.1.start).unwrap());
-    println!("{}", parsed.1.position.get_column());
+    /*
+    println!("{}", parsed.1.mid.location_offset());
+    println!("{}", parsed.1.end.location_line());
+    */
     // println!("{}", std::str::from_utf8(hi).unwrap());
     // let working_dir = Path::new(matches.value_of("dir").unwrap_or(&path.into_os_string().into_string().unwrap()));
 
