@@ -12,7 +12,7 @@ use std;
 use std::str;
 use nom_locate::{position, LocatedSpan};
 
-pub type Span<'a> = LocatedSpan<&'a str>;
+pub type Span<'a> = LocatedSpan<&'a [u8]>;
 /// Possible functions I'm parsing for. Maybe it's possible to get typescript and js in one parser
 /// const hi = () => {}
 /// function myFun2(arg1, arg2) {}
@@ -43,33 +43,48 @@ pub fn beginning_args(input: Span) -> IResult<Span, Span> {
 }
 
 
-pub struct CStyleFunction {
+pub struct CStyleFunction<'a> {
     // pub declarator: Span<'a>,
     // pub arg_start:  Span<'a>, // &'a[u8],
     // pub arg_end:    Span<'a>,
     // pub end:        Span<'a>
-    // pub declaration:  Span<'a>,
-    // pub start_param:  Span<'a>,
-    // pub end_param:    Span<'a>,
-    // pub start_body:   Span<'a>,
-    // pub end_body:     Span<'a>
+    pub declaration:  Span<'a>,
+    pub start_param:  Span<'a>,
+    pub end_param:    Span<'a>,
+    pub start_body:   Span<'a>,
+    pub start_pos:    Span<'a>,
+    pub end_body:     Span<'a>,
+    pub end_pos:      Span<'a>
  // output file name with : number for easy click
 }
 
-pub fn get_fun_name(input: &str) -> IResult<&str, CStyleFunction> {
+pub fn get_fun_name(input: Span) -> IResult<Span, CStyleFunction> {
     /*
     let (input, main) = tag("main() {")(input)?;
     let (input, pos) = position(input)?;
     let (input, body) = take_until("}")(input)?;
     let (input, end) =  tag("}")(input)?;
     */
-//     let (input, (declarator, arg_start, arg_end, end)) = tuple((
-//  //       alt((const_fun, function_fun, private_fun, public_fun)),
-//         tag("function"),
-//         tag("("),
-//         tag(")"),
-//         tag("}")
-//     ))(input)?;
+    /*
+    let (input, (declarator, arg_start, arg_end, start, start_pos, end, end_pos)) = tuple((
+ //       alt((const_fun, function_fun, private_fun, public_fun)),
+        take_until("function"),
+        take_until("("),
+        take_until(")"),
+        take_until("{"),
+        position,
+        take_until("}"),
+        position
+    ))(input)?;
+    */
+    let (input, declarator) = take_until("function")(input)?;
+    let (input, arg_start) = take_until("(")(input)?;
+    let (input, arg_end) = take_until(")")(input)?;
+    let (input, body_start) = take_until("{")(input)?;
+    let (input, start_pos) = position(input)?;
+    let (input, body_end) = take_until("}")(input)?;
+    let (input, end_pos) = position(input)?;
+    // println!("{} - start: {} - end", std::str::from_utf8(start_pos.fragment()).unwrap(), std::str::from_utf8(end_pos.fragment()).unwrap());
     // let (input, (declaration, start_param, end_param, start_body, end_body)) = tuple((
     //   tag("function"),
     //   tag("("),
@@ -78,15 +93,15 @@ pub fn get_fun_name(input: &str) -> IResult<&str, CStyleFunction> {
     //   tag("}"),
     // ))(input)?;
     // let (input, pos) = position(input)?;
-    println!("{}", input);
-    let (input, _tag) = char('}')("gfdsagdsag}")?;
-    println!("{}", input);
+    // println!("{}", std::str::from_utf8(input).unwrap());
     Ok((input, CStyleFunction {
-      // declaration: declaration,
-      // start_param: start_param,
-      // end_param: end_param,
-      // start_body: start_body,
-      // end_body: end_body
+      declaration: declarator,
+      start_param: arg_start,
+      end_param: arg_end,
+      start_body: body_start,
+      start_pos: start_pos,
+      end_body: body_end,
+      end_pos: end_pos
     }))
     // Ok((input, CStyleFunction {
     //     declarator: declarator,
