@@ -7,23 +7,31 @@ use nom::{
     sequence::tuple};
 use nom::bytes::complete::take;
 use std::str;
-use nom_locate::LocatedSpan;
-type Span<'a> = LocatedSpan<&'a [u8]>;
+use nom_locate::{position, LocatedSpan};
+
+pub type Span<'a> = LocatedSpan<&'a [u8]>;
 
 pub struct CStyleFunction<'a> {
+    pub position: Span<'a>,
     pub start:  &'a[u8],
     pub mid:    &'a[u8],
     pub end:    &'a[u8],
  // output file name with : number for easy click
 }
 
-pub fn get_fun_name<'a>(input: &'a [u8]) -> IResult<&'a [u8], CStyleFunction> {
-    let (input, (main, body, end)) = tuple((
+pub fn get_fun_name(input: Span) -> IResult<Span, CStyleFunction> {
+    let (input, main) = tag("main() {")(input)?;
+    let (input, pos) = position(input)?;
+    let (input, body) = take_until("}")(input)?;
+    let (input, end) =  tag("}")(input)?;
+    /*
+    let (input, (main, body, end,)) = tuple((
         tag("main() {"),
         take_until("}"),
         tag("}")
     ))(input)?;
-    Ok((input, CStyleFunction {start: main, mid: body, end: end}))
+    */
+    Ok((input, CStyleFunction {position: pos, start: main.fragment(), mid: body.fragment(), end: end.fragment()}))
     // println!("{} {} {}", str::from_utf8( start).unwrap(), str::from_utf8(mid).unwrap(), str::from_utf8(end).unwrap());
     // tag("main")(input)
 }
