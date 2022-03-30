@@ -12,7 +12,7 @@ use std;
 use std::str;
 use nom_locate::{position, LocatedSpan};
 
-pub type Span<'a> = LocatedSpan<&'a [u8]>;
+pub type Span<'a> = LocatedSpan<&'a str>;
 /// Possible functions I'm parsing for. Maybe it's possible to get typescript and js in one parser
 /// const hi = () => {}
 /// function myFun2(arg1, arg2) {}
@@ -43,35 +43,57 @@ pub fn beginning_args(input: Span) -> IResult<Span, Span> {
 }
 
 
-pub struct CStyleFunction<'a> {
-    pub declarator: Span<'a>,
-    pub arg_start:  Span<'a>, // &'a[u8],
-    pub arg_end:    Span<'a>,
-    pub end:        Span<'a>
+pub struct CStyleFunction {
+    // pub declarator: Span<'a>,
+    // pub arg_start:  Span<'a>, // &'a[u8],
+    // pub arg_end:    Span<'a>,
+    // pub end:        Span<'a>
+    // pub declaration:  Span<'a>,
+    // pub start_param:  Span<'a>,
+    // pub end_param:    Span<'a>,
+    // pub start_body:   Span<'a>,
+    // pub end_body:     Span<'a>
  // output file name with : number for easy click
 }
 
-pub fn get_fun_name(input: Span) -> IResult<Span, CStyleFunction> {
+pub fn get_fun_name(input: &str) -> IResult<&str, CStyleFunction> {
     /*
     let (input, main) = tag("main() {")(input)?;
     let (input, pos) = position(input)?;
     let (input, body) = take_until("}")(input)?;
     let (input, end) =  tag("}")(input)?;
     */
-    let (input, (declarator, arg_start, arg_end, end)) = tuple((
- //       alt((const_fun, function_fun, private_fun, public_fun)),
-        tag("function"),
-        tag("("),
-        tag(")"),
-        tag("}")
-    ))(input)?;
-    let (input, pos) = position(input)?;
+//     let (input, (declarator, arg_start, arg_end, end)) = tuple((
+//  //       alt((const_fun, function_fun, private_fun, public_fun)),
+//         tag("function"),
+//         tag("("),
+//         tag(")"),
+//         tag("}")
+//     ))(input)?;
+    // let (input, (declaration, start_param, end_param, start_body, end_body)) = tuple((
+    //   tag("function"),
+    //   tag("("),
+    //   tag(")"),
+    //   tag("{"),
+    //   tag("}"),
+    // ))(input)?;
+    // let (input, pos) = position(input)?;
+    println!("{}", input);
+    let (input, _tag) = char('}')("gfdsagdsag}")?;
+    println!("{}", input);
     Ok((input, CStyleFunction {
-        declarator: declarator,
-        arg_start: arg_start,
-        arg_end: arg_end,
-        end: end
+      // declaration: declaration,
+      // start_param: start_param,
+      // end_param: end_param,
+      // start_body: start_body,
+      // end_body: end_body
     }))
+    // Ok((input, CStyleFunction {
+    //     declarator: declarator,
+    //     arg_start: arg_start,
+    //     arg_end: arg_end,
+    //     end: end
+    // }))
     // println!("{} {} {}", str::from_utf8( start).unwrap(), str::from_utf8(mid).unwrap(), str::from_utf8(end).unwrap());
     // tag("main")(input)
 }
