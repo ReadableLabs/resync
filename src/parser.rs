@@ -13,9 +13,14 @@ use std;
 use std::str;
 use nom_locate::{position, LocatedSpan};
 
+/// Warning: This was extraordinarily difficult for me to wrap my head around.
+/// It's using the nom library. If you don't know it, I suggest you read
+/// on https://github.com/Geal/nom or else you will have a bad time.
+
 pub type Span<'a> = LocatedSpan<&'a str>;
 /*
   class myClass() {
+    // for class, check all variables which start with ) and see if there's an arrow or { right after them
     myFun1() { // use till not whitespace and check char if {
     }
     myFun2 = () => {}
@@ -54,7 +59,7 @@ pub struct CStyleFunction<'a> {
 pub fn get_fun_type(input: Span) -> IResult<Span, FunctionType> {
   let (input, t) = alt(( // match
     take_until("=>"),
-    take_until("function")
+    take_until("function") // match something for the ones in the class
   ))(input)?;
 
  let function_type = match *t.fragment() {
