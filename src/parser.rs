@@ -1,5 +1,6 @@
 use nom::{
     IResult,
+    error::VerboseError,
     branch::alt,
     bytes::complete::{tag, take_while, take_until},
     character::{is_hex_digit, is_alphabetic, is_space, is_alphanumeric},
@@ -13,41 +14,30 @@ use std::str;
 use nom_locate::{position, LocatedSpan};
 
 pub type Span<'a> = LocatedSpan<&'a str>;
-/// Possible functions I'm parsing for. Maybe it's possible to get typescript and js in one parser
-/// const hi = () => {}
-/// function myFun2(arg1, arg2) {}
-/// private myFun2() {}
-/// public myFun2() {} make sure it does not include a semicolon, and the next character is an
-/// opening brace
-/// myFun2() {}
+/*
+  class myClass() {
+    myFun1() { // use till not whitespace and check char if {
+    }
+    myFun2 = () => {}
+    myFun2 = hi => {}
+  }
 
+  function myFun2() {
+  }
 
-pub fn const_fun(input: Span) -> IResult<Span, Span> {
-    tag("const")(input)
+  function() {}
+
+  const myFun2 = () => {}
+  const myFun2 = hi => {}
+*/
+
+pub enum FunctionType {
+  Arrow,
+  Normal,
+  None, // dangerous
 }
-
-pub fn function_fun(input: Span) -> IResult<Span, Span> {
-    tag("function")(input)
-}
-
-pub fn private_fun(input: Span) -> IResult<Span, Span> {
-    tag("private")(input)
-}
-
-pub fn public_fun(input: Span) -> IResult<Span, Span> {
-    tag("public")(input)
-}
-
-pub fn beginning_args(input: Span) -> IResult<Span, Span> {
-    tag("(")(input)
-}
-
 
 pub struct CStyleFunction<'a> {
-    // pub declarator: Span<'a>,
-    // pub arg_start:  Span<'a>, // &'a[u8],
-    // pub arg_end:    Span<'a>,
-    // pub end:        Span<'a>
     pub declaration:  Span<'a>,
     pub start_param:  Span<'a>,
     pub end_param:    Span<'a>,
@@ -58,6 +48,38 @@ pub struct CStyleFunction<'a> {
  // output file name with : number for easy click
 }
 
+/// Gets the function type of a function.
+/// Because ECMA functions can be two types, we need to check
+/// Which type the function is before parsing it.
+pub fn get_fun_type(input: Span) -> IResult<Span, FunctionType> {
+  let (input, t) = alt(( // match
+    take_until("=>"),
+    take_until("function")
+  ))(input)?;
+
+ let function_type = match *t.fragment() {
+    "=>" => FunctionType::Arrow,
+    "function" => FunctionType::Normal,
+    _ => FunctionType::None, // throw error instead
+  };
+  Ok((input, function_type))
+}
+
+/// Gets the function range, given the whole text file
+pub fn get_fun_range(input: Span) {
+  let (input, fun_type) = get_fun_type(input).unwrap(); // check for error and do something if not
+  match fun_type {
+    FunctionType::Arrow => {
+      // parse arrow function
+    },
+    FunctionType::Normal => {
+    },
+    FunctionType::None => {
+    }
+  }
+}
+
+// get comment ranges as well as function ranges so look for comments first
 pub fn get_fun_name(input: Span) -> IResult<Span, CStyleFunction> {
     let (input, declarator) = take_until("function")(input)?;
     let (input, arg_start) = take_until("(")(input)?;
@@ -66,16 +88,6 @@ pub fn get_fun_name(input: Span) -> IResult<Span, CStyleFunction> {
     let (input, start_pos) = position(input)?;
     let (input, body_end) = take_until("}")(input)?;
     let (input, end_pos) = position(input)?;
-    // println!("{} - start: {} - end", std::str::from_utf8(start_pos.fragment()).unwrap(), std::str::from_utf8(end_pos.fragment()).unwrap());
-    // let (input, (declaration, start_param, end_param, start_body, end_body)) = tuple((
-    //   tag("function"),
-    //   tag("("),
-    //   tag(")"),
-    //   tag("{"),
-    //   tag("}"),
-    // ))(input)?;
-    // let (input, pos) = position(input)?;
-    // println!("{}", std::str::from_utf8(input).unwrap());
     Ok((input, CStyleFunction {
       declaration: declarator,
       start_param: arg_start,
