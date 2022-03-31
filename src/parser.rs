@@ -12,7 +12,7 @@ use std;
 use std::str;
 use nom_locate::{position, LocatedSpan};
 
-pub type Span<'a> = LocatedSpan<&'a [u8]>;
+pub type Span<'a> = LocatedSpan<&'a str>;
 /// Possible functions I'm parsing for. Maybe it's possible to get typescript and js in one parser
 /// const hi = () => {}
 /// function myFun2(arg1, arg2) {}
@@ -59,24 +59,6 @@ pub struct CStyleFunction<'a> {
 }
 
 pub fn get_fun_name(input: Span) -> IResult<Span, CStyleFunction> {
-    /*
-    let (input, main) = tag("main() {")(input)?;
-    let (input, pos) = position(input)?;
-    let (input, body) = take_until("}")(input)?;
-    let (input, end) =  tag("}")(input)?;
-    */
-    /*
-    let (input, (declarator, arg_start, arg_end, start, start_pos, end, end_pos)) = tuple((
- //       alt((const_fun, function_fun, private_fun, public_fun)),
-        take_until("function"),
-        take_until("("),
-        take_until(")"),
-        take_until("{"),
-        position,
-        take_until("}"),
-        position
-    ))(input)?;
-    */
     let (input, declarator) = take_until("function")(input)?;
     let (input, arg_start) = take_until("(")(input)?;
     let (input, arg_end) = take_until(")")(input)?;
@@ -103,14 +85,6 @@ pub fn get_fun_name(input: Span) -> IResult<Span, CStyleFunction> {
       end_body: body_end,
       end_pos: end_pos
     }))
-    // Ok((input, CStyleFunction {
-    //     declarator: declarator,
-    //     arg_start: arg_start,
-    //     arg_end: arg_end,
-    //     end: end
-    // }))
-    // println!("{} {} {}", str::from_utf8( start).unwrap(), str::from_utf8(mid).unwrap(), str::from_utf8(end).unwrap());
-    // tag("main")(input)
 }
 
 /*

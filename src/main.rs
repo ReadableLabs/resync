@@ -66,7 +66,7 @@ fn main() {
     let working_dir = Path::new(matches.value_of("dir").unwrap_or("/home/nevin/Desktop/testinit"));
     println!("{}", working_dir.display());
     println!("}}");
-    let parsed = get_fun_name(Span::new(b"function myFun2() {\n2u358902u859\n}")).unwrap();
+    let parsed = get_fun_name(Span::new("function myFun2() {\n2u358902u859\n}")).unwrap();
     let text = parsed.1.start_pos.location_line();
     let second = parsed.1.end_pos.location_line();
     println!("{}:{}", text, second);
