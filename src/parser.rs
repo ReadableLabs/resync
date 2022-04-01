@@ -4,7 +4,7 @@ use nom::{
     branch::alt,
     bytes::complete::{tag, take_while, take_until},
     character::{is_hex_digit, is_alphabetic, is_space, is_alphanumeric},
-    character::complete::char,
+    character::complete::{char, anychar},
     combinator::{map_res, value},
     error::ParseError,
     sequence::tuple};
@@ -23,7 +23,17 @@ pub type Span<'a> = LocatedSpan<&'a str>;
     // for class, check all variables which start with ) and see if there's an arrow or { right after them
     myFun1() { // use till not whitespace and check char if {
     }
-    myFun2 = () => {}
+    myFun2 = () => {
+
+    asdg
+    sagasd
+    gasd
+    gsda
+    gdas
+    gdsa
+    g
+    dsagads
+    g}
     myFun2 = hi => {}
   }
 
@@ -39,7 +49,12 @@ pub type Span<'a> = LocatedSpan<&'a str>;
 pub enum FunctionType {
   Arrow,
   Normal,
-  None, // dangerous
+  Empty, // dangerous
+}
+
+pub struct JsFunction<'a> {
+    pub start:  Span<'a>,
+    pub end:    Span<'a>
 }
 
 pub struct CStyleFunction<'a> {
@@ -62,30 +77,85 @@ pub fn get_fun_type(input: Span) -> IResult<Span, FunctionType> {
     take_until("function") // match something for the ones in the class
   ))(input)?;
 
+  println!("t: {}", *t.fragment());
  let function_type = match *t.fragment() {
     "=>" => FunctionType::Arrow,
     "function" => FunctionType::Normal,
-    _ => FunctionType::None, // throw error instead
+    _ => FunctionType::Empty, // throw error instead
   };
   Ok((input, function_type))
 }
 
+/// Assumed you called this right after a tag of {
+pub fn get_until_fn_close(input: Span) -> IResult<Span, Span> {
+    let mut start = 1;
+    let mut end = 0;
+    while start < end {
+        let (input, current_char) = anychar(input)?;
+        match current_char {
+            '{' => {
+                start += 1;
+            },
+            '}' => {
+                end += 1;
+            }
+        }
+    }
+    let (input, end_pos) = position(input)?;
+    Ok((input, end_pos)); // end pos should be the same as input so this is useless
+}
+
 /// Gets the function range, given the whole text file
-pub fn get_fun_range(input: Span) {
+//                                          input, pos
+pub fn get_fun_range(input: Span) -> IResult<Span, JsFunction> {
   let (input, fun_type) = get_fun_type(input).unwrap(); // check for error and do something if not
   match fun_type {
     FunctionType::Arrow => {
+        let (input, spaces) = take_until("{")(input)?;
+        if spaces.fragment().trim().is_empty() { // then there is in fact a { with whitespace
+            let (input, fun_start) = tag("{")(input)?;
+            let (input, fun_start) = position(input)?;
+            let mut start_braces = 1;
+            let mut end_braces = 0;
+            while start_braces > end_braces {
+                let (input, current_char) = anychar(input)?;
+                match current_char { // eof might be done automatically
+                    '{' => {
+                        start_braces += 1;
+                    },
+                    '}' => {
+                        end_braces += 1;
+                    },
+                    _ => {}
+                }
+            }
+            println!("current input: {}", input.fragment());
+            let (input, fun_end) = position(input)?;
+            return Ok((input, JsFunction {
+                start: fun_start,
+                end: fun_end,
+            }));
+        }
+        else {
+            println!("Not empty, skipping");
+        }
+        // might be bad
       // parse arrow function
     },
     FunctionType::Normal => {
     },
-    FunctionType::None => {
+    FunctionType::Empty => {
+        println!("empty");
     }
   }
+    return Ok((input, JsFunction {
+        start: Span::new("did not work"),
+        end:   Span::new("did not work")
+    }));
 }
 
 // get comment ranges as well as function ranges so look for comments first
-pub fn get_fun_name(input: Span) -> IResult<Span, CStyleFunction> {
+pub fn get_fun_name(input: Span) -> IResult<Span, CStyleFunction> { // change to result and unwrap or just frekaing stop
     let (input, declarator) = take_until("function")(input)?;
     let (input, arg_start) = take_until("(")(input)?;
     let (input, arg_end) = take_until(")")(input)?;
