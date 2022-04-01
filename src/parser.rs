@@ -2,14 +2,13 @@ use nom::{
     IResult,
     error::VerboseError,
     branch::alt,
-    bytes::complete::{tag, take_while, take_until},
+    bytes::complete::{tag, take_while, take, take_until, is_not},
     character::{is_hex_digit, is_alphabetic, is_space, is_alphanumeric},
     character::complete::{char, anychar},
     combinator::{map_res, value},
     error::ParseError,
-    sequence::tuple};
-use nom::bytes::complete::take;
-use std;
+    sequence::{tuple, preceded}};
+use std::{thread, time};
 use std::str;
 use nom_locate::{position, LocatedSpan};
 
@@ -73,11 +72,12 @@ pub struct CStyleFunction<'a> {
 /// Which type the function is before parsing it.
 pub fn get_fun_type(input: Span) -> IResult<Span, FunctionType> {
   let (input, t) = alt(( // match
-    take_until("=>"),
-    take_until("function") // match something for the ones in the class
+    preceded(take_until("=>"), tag("=>")), // take until and tag
+    preceded(take_until("function"), tag("function")) // match something for the ones in the class
   ))(input)?;
 
   println!("t: {}", *t.fragment());
+  println!("input {}", input.fragment());
  let function_type = match *t.fragment() {
     "=>" => FunctionType::Arrow,
     "function" => FunctionType::Normal,
@@ -87,6 +87,7 @@ pub fn get_fun_type(input: Span) -> IResult<Span, FunctionType> {
 }
 
 /// Assumed you called this right after a tag of {
+/// Not being used yet
 pub fn get_until_fn_close(input: Span) -> IResult<Span, Span> {
     let mut start = 1;
     let mut end = 0;
@@ -98,11 +99,12 @@ pub fn get_until_fn_close(input: Span) -> IResult<Span, Span> {
             },
             '}' => {
                 end += 1;
-            }
+            },
+            _ => {}
         }
     }
     let (input, end_pos) = position(input)?;
-    Ok((input, end_pos)); // end pos should be the same as input so this is useless
+    return Ok((input, end_pos)); // end pos should be the same as input so this is useless
 }
 
 /// Gets the function range, given the whole text file
@@ -112,18 +114,26 @@ pub fn get_fun_range(input: Span) -> IResult<Span, JsFunction> {
   match fun_type {
     FunctionType::Arrow => {
         let (input, spaces) = take_until("{")(input)?;
+        // println!("input: {}", input.fragment());
         if spaces.fragment().trim().is_empty() { // then there is in fact a { with whitespace
             let (input, fun_start) = tag("{")(input)?;
             let (input, fun_start) = position(input)?;
+            println!("input: {}", input.fragment());
             let mut start_braces = 1;
             let mut end_braces = 0;
             while start_braces > end_braces {
-                let (input, current_char) = anychar(input)?;
-                match current_char { // eof might be done automatically
-                    '{' => {
+                // println!("start_braces: {} - end_braces: {}", start_braces, end_braces);
+                let (input, end_brace_char) = alt((
+                            preceded(take_until("}"), tag("}")),
+                            preceded(take_until("{"), tag("{"))
+                        ))(input)?;
+                println!("{}", end_brace_char);
+                thread::sleep(time::Duration::from_secs(1));
+                match *end_brace_char.fragment() { // eof might be done automatically
+                    "{" => {
                         start_braces += 1;
                     },
-                    '}' => {
+                    "}" => {
                         end_braces += 1;
                     },
                     _ => {}
@@ -186,3 +196,4 @@ pub fn hex_color<'a, E: ParseError<&'a str>>(i: &'a str) -> IResult<&'a str, E> 
     )(i)
   }
 */
+
