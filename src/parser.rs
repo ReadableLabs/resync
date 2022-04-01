@@ -108,7 +108,6 @@ pub fn get_until_fn_close(input: Span) -> IResult<Span, Span> {
 }
 
 /// Gets the function range, given the whole text file
-//                                          input, pos
 pub fn get_fun_range(input: Span) -> IResult<Span, JsFunction> {
   let (input, fun_type) = get_fun_type(input).unwrap(); // check for error and do something if not
   match fun_type {
@@ -121,12 +120,13 @@ pub fn get_fun_range(input: Span) -> IResult<Span, JsFunction> {
             println!("input: {}", input.location_offset());
             let mut start_braces = 1;
             let mut end_braces = 0;
-            while start_braces > end_braces {
+            let end_pos = loop {
                 // println!("start_braces: {} - end_braces: {}", start_braces, end_braces);
                 let (input, end_brace_char) = alt((
                             preceded(take_until("}"), tag("}")),
                             preceded(take_until("{"), tag("{"))
                         ))(input)?;
+                println!("end brace {}", end_brace_char.location_offset());
                 println!("input 2: {}", input.fragment());
                 match *end_brace_char.fragment() { // eof might be done automatically
                     "{" => {
@@ -138,9 +138,14 @@ pub fn get_fun_range(input: Span) -> IResult<Span, JsFunction> {
                     },
                     _ => {}
                 }
-            }
+
+                if start_braces <= end_braces {
+                    break end_brace_char;
+                }
+            };
             // println!("current input: {}", input.fragment());
-            let (input, fun_end) = position(input)?;
+            let (input, fun_end) = position(end_pos)?;
+            println!("{}", fun_end.location_offset());
             println!("fun start line: {} - fun end line: {}", fun_start.location_offset(), fun_end.location_offset());
             return Ok((input, JsFunction {
                 start: fun_start,
@@ -164,37 +169,4 @@ pub fn get_fun_range(input: Span) -> IResult<Span, JsFunction> {
         end:   Span::new("did not work")
     }));
 }
-
-// get comment ranges as well as function ranges so look for comments first
-pub fn get_fun_name(input: Span) -> IResult<Span, CStyleFunction> { // change to result and unwrap or just frekaing stop
-    let (input, declarator) = take_until("function")(input)?;
-    let (input, arg_start) = take_until("(")(input)?;
-    let (input, arg_end) = take_until(")")(input)?;
-    let (input, body_start) = take_until("{")(input)?;
-    let (input, start_pos) = position(input)?;
-    let (input, body_end) = take_until("}")(input)?;
-    let (input, end_pos) = position(input)?;
-    Ok((input, CStyleFunction {
-      declaration: declarator,
-      start_param: arg_start,
-      end_param: arg_end,
-      start_body: body_start,
-      start_pos: start_pos,
-      end_body: body_end,
-      end_pos: end_pos
-    }))
-}
-
-/*
-pub fn hex_color<'a, E: ParseError<&'a str>>(i: &'a str) -> IResult<&'a str, E> {
-    value(
-      (), // Output is thrown away.
-      tuple((
-        tag("(*"),
-        take_until("*)"),
-        tag("*)")
-      ))
-    )(i)
-  }
-*/
 
