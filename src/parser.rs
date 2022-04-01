@@ -118,7 +118,7 @@ pub fn get_fun_range(input: Span) -> IResult<Span, JsFunction> {
         if spaces.fragment().trim().is_empty() { // then there is in fact a { with whitespace
             let (input, fun_start) = tag("{")(input)?;
             let (input, fun_start) = position(input)?;
-            println!("input: {}", input.fragment());
+            println!("input: {}", input.location_offset());
             let mut start_braces = 1;
             let mut end_braces = 0;
             while start_braces > end_braces {
@@ -127,20 +127,21 @@ pub fn get_fun_range(input: Span) -> IResult<Span, JsFunction> {
                             preceded(take_until("}"), tag("}")),
                             preceded(take_until("{"), tag("{"))
                         ))(input)?;
-                println!("{}", end_brace_char);
-                thread::sleep(time::Duration::from_secs(1));
+                println!("input 2: {}", input.fragment());
                 match *end_brace_char.fragment() { // eof might be done automatically
                     "{" => {
                         start_braces += 1;
                     },
                     "}" => {
+                        println!("found end brace");
                         end_braces += 1;
                     },
                     _ => {}
                 }
             }
-            println!("current input: {}", input.fragment());
+            // println!("current input: {}", input.fragment());
             let (input, fun_end) = position(input)?;
+            println!("fun start line: {} - fun end line: {}", fun_start.location_offset(), fun_end.location_offset());
             return Ok((input, JsFunction {
                 start: fun_start,
                 end: fun_end,
