@@ -61,12 +61,13 @@ pub struct JsFunction<'a> {
 pub fn get_fun_type(input: Span) -> IResult<Span, FunctionType> {
   let (input, t) = alt(( // match
     preceded(take_until("=>"), tag("=>")), // take until and tag
+    // tuple get ) and then } and make sure no white space exist between
     preceded(take_until("function"), tag("function")) // get opening brace, alt closing brace and check if there's something before the opening. The arrow function will hopefully be run before, so no need to worry about accidentally getting an arrow function
   ))(input)?;
 
   println!("t: {}", *t.fragment());
   println!("input {}", input.fragment());
- let function_type = match *t.fragment() {
+ let function_type = match *t.fragment() { // value because t fragment is a span
     "=>" => FunctionType::Arrow,
     "function" => FunctionType::Normal,
     _ => FunctionType::Empty, // throw error instead
@@ -120,10 +121,10 @@ pub fn get_fun_range(input: Span) -> IResult<Span, JsFunction> {
             println!("input: {}", input.location_offset());
             println!("{}", fun_end.location_offset());
             println!("fun start line: {} - fun end line: {}", fun_start.location_offset(), fun_end.location_offset());
-            Ok((input, JsFunction {
+            return Ok((input, JsFunction {
                 start: fun_start,
                 end: fun_end,
-            }))
+            }));
         }
         else {
             println!("There was something between the arrow and the opening brace. Skipping");
@@ -135,7 +136,7 @@ pub fn get_fun_range(input: Span) -> IResult<Span, JsFunction> {
         println!("Failed to find function. Skipping");
     }
   }
-  Ok((input, JsFunction { // should never run, if it does PLEASE report a bug
+  return Ok((input, JsFunction { // should never run, if it does PLEASE report a bug
       start: Span::new("did not work"),
       end:   Span::new("did not work")
   }));

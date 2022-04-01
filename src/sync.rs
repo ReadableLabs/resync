@@ -17,7 +17,7 @@
  * your uncommited changes without impacting HEAD the current branch, or the Git index.
  *
  * https://github.com/tkellogg/dura
- * Commit: 4948b965e81aa8cbba02737dca41f218b5b22956
+ * Latest commit to file: 4948b965e81aa8cbba02737dca41f218b5b22956
  *
  * Changes
  * - Removed output
@@ -26,12 +26,18 @@
  * - Removed function "is_repo", "get_git_author", and "get_git_email"
  * - Renamed from "snapshot.rs" to "sync.rs"
  * - Changed return type from CaptureStatus to boolean
+ * - Added docstring to "sync" function
  * - Removed config using
 */
 
 use git2::{BranchType, DiffOptions, Error, IndexAddOption, Repository, Signature};
 use std::path::Path;
 
+/// Makes a commit to the resync branch with so there are no uncommited changes
+/// when we get the out of sync comments. This is also used to constantly keep
+/// track of the out of sync comments in the extension
+///
+/// Does not impact the head of your repo
 pub fn sync(path: &Path) -> Result<String, Error> {
     let repo = Repository::open(path)?;
     let head = repo.head()?.peel_to_commit()?;

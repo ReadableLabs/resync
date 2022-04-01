@@ -31,7 +31,7 @@ fn main() {
              .help("Format designed for machine consumption"))
         .arg(Arg::new("m")
              .short('m')
-             .long("user-master-branch")
+             .long("use-master-branch")
              .help("Whether or not to use master branch to get blame data"))
         .get_matches();
 
