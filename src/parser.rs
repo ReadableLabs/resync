@@ -56,24 +56,12 @@ pub struct JsFunction<'a> {
     pub end:    Span<'a>
 }
 
-pub struct CStyleFunction<'a> {
-    pub declaration:  Span<'a>,
-    pub start_param:  Span<'a>,
-    pub end_param:    Span<'a>,
-    pub start_body:   Span<'a>,
-    pub start_pos:    Span<'a>,
-    pub end_body:     Span<'a>,
-    pub end_pos:      Span<'a>
- // output file name with : number for easy click
-}
-
 /// Gets the function type of a function.
-/// Because ECMA functions can be two types, we need to check
-/// Which type the function is before parsing it.
+/// Currently supports normal or arrow functions
 pub fn get_fun_type(input: Span) -> IResult<Span, FunctionType> {
   let (input, t) = alt(( // match
     preceded(take_until("=>"), tag("=>")), // take until and tag
-    preceded(take_until("function"), tag("function")) // match something for the ones in the class
+    preceded(take_until("function"), tag("function")) // get opening brace, alt closing brace and check if there's something before the opening. The arrow function will hopefully be run before, so no need to worry about accidentally getting an arrow function
   ))(input)?;
 
   println!("t: {}", *t.fragment());
@@ -86,30 +74,41 @@ pub fn get_fun_type(input: Span) -> IResult<Span, FunctionType> {
   Ok((input, function_type))
 }
 
+/// Gets the end position of a function, assuming you're already inside a function
 /// Assumed you called this right after a tag of {
-/// Not being used yet
-pub fn get_until_fn_close(input: Span) -> IResult<Span, Span> {
-    let mut start = 1;
-    let mut end = 0;
-    while start < end {
-        let (input, current_char) = anychar(input)?;
-        match current_char {
-            '{' => {
-                start += 1;
+pub fn get_fun_close(input: Span) -> IResult<Span, Span> {
+    let mut start_braces = 1;
+    let mut end_braces = 0;
+    let end_pos = loop {
+        let (input, end_brace_char) = alt((
+                    preceded(take_until("}"), tag("}")),
+                    preceded(take_until("{"), tag("{"))
+                ))(input)?;
+        println!("end brace {}", end_brace_char.location_offset());
+        println!("input 2: {}", input.fragment());
+        match *end_brace_char.fragment() { // eof might be done automatically
+            "{" => {
+                start_braces += 1;
             },
-            '}' => {
-                end += 1;
+            "}" => {
+                println!("found end brace");
+                end_braces += 1;
             },
             _ => {}
         }
-    }
-    let (input, end_pos) = position(input)?;
-    return Ok((input, end_pos)); // end pos should be the same as input so this is useless
+
+        if start_braces <= end_braces {
+            break end_brace_char;
+        }
+    };
+    // println!("current input: {}", input.fragment());
+    let (input, fun_end) = position(end_pos)?;
+    Ok((input, fun_end))
 }
 
-/// Gets the function range, given the whole text file
+/// Gets the range of a single function, assumes given a text file
 pub fn get_fun_range(input: Span) -> IResult<Span, JsFunction> {
-  let (input, fun_type) = get_fun_type(input).unwrap(); // check for error and do something if not
+  let (input, fun_type) = get_fun_type(input)?; // check for error and do something if not
   match fun_type {
     FunctionType::Arrow => {
         let (input, spaces) = take_until("{")(input)?;
@@ -117,56 +116,28 @@ pub fn get_fun_range(input: Span) -> IResult<Span, JsFunction> {
         if spaces.fragment().trim().is_empty() { // then there is in fact a { with whitespace
             let (input, fun_start) = tag("{")(input)?;
             let (input, fun_start) = position(input)?;
+            let (input, fun_end) = get_fun_close(input)?;
             println!("input: {}", input.location_offset());
-            let mut start_braces = 1;
-            let mut end_braces = 0;
-            let end_pos = loop {
-                // println!("start_braces: {} - end_braces: {}", start_braces, end_braces);
-                let (input, end_brace_char) = alt((
-                            preceded(take_until("}"), tag("}")),
-                            preceded(take_until("{"), tag("{"))
-                        ))(input)?;
-                println!("end brace {}", end_brace_char.location_offset());
-                println!("input 2: {}", input.fragment());
-                match *end_brace_char.fragment() { // eof might be done automatically
-                    "{" => {
-                        start_braces += 1;
-                    },
-                    "}" => {
-                        println!("found end brace");
-                        end_braces += 1;
-                    },
-                    _ => {}
-                }
-
-                if start_braces <= end_braces {
-                    break end_brace_char;
-                }
-            };
-            // println!("current input: {}", input.fragment());
-            let (input, fun_end) = position(end_pos)?;
             println!("{}", fun_end.location_offset());
             println!("fun start line: {} - fun end line: {}", fun_start.location_offset(), fun_end.location_offset());
-            return Ok((input, JsFunction {
+            Ok((input, JsFunction {
                 start: fun_start,
                 end: fun_end,
-            }));
+            }))
         }
         else {
-            println!("Not empty, skipping");
+            println!("There was something between the arrow and the opening brace. Skipping");
         }
-        // might be bad
-      // parse arrow function
     },
     FunctionType::Normal => {
     },
     FunctionType::Empty => {
-        println!("empty");
+        println!("Failed to find function. Skipping");
     }
   }
-    return Ok((input, JsFunction {
-        start: Span::new("did not work"),
-        end:   Span::new("did not work")
-    }));
+  Ok((input, JsFunction { // should never run, if it does PLEASE report a bug
+      start: Span::new("did not work"),
+      end:   Span::new("did not work")
+  }));
 }
 
