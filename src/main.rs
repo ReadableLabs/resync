@@ -2,7 +2,7 @@ use std::path::Path;
 use clap::{Arg, Command};
 use resync::sync;
 use resync::info;
-use resync::parser::get_fun_range;
+use resync::parser::{get_fun_range, get_all_functions};
 use nom::Finish;
 use nom::error::ParseError;
 use resync::parser::Span;
@@ -37,8 +37,9 @@ fn main() {
 
     let working_dir = Path::new(matches.value_of("dir").unwrap_or("/home/nevin/Desktop/testinit"));
     println!("{}", working_dir.display());
+    get_all_functions(Span::new("public function myFun2() {\nsome code\n}\n public function myFun3() {\nsome more code\n}\n public function myFun4() {\nasdgasagsdgdas\n}"));
     // let parsed = get_fun_range(Span::new("myFun2 = () => {\nthis is text inside of a function\n}")).unwrap();
-    let parsed2 = get_fun_range(Span::new("myFun2() {\nthis is text inside of a function\n}")).unwrap();
+    // let parsed2 = get_fun_range(Span::new("myFun2() {\nthis is text inside of a function\n}")).unwrap();
     // let text = parsed.1.start_pos.location_line();
     // let second = parsed.1.end_pos.location_line();
     // println!("{}:{}", text, second);
