@@ -5,9 +5,9 @@ use nom::{
     bytes::complete::{tag, take_while, take, take_until, is_not},
     character::{is_hex_digit, is_alphabetic, is_space, is_alphanumeric},
     character::complete::{char, anychar},
-    combinator::{map_res, value},
+    combinator::{map_res, value, rest},
     error::ParseError,
-    sequence::{tuple, preceded}};
+    sequence::{tuple, preceded, delimited}};
 use std::{thread, time};
 use std::str;
 use nom_locate::{position, LocatedSpan};
@@ -59,20 +59,29 @@ pub struct JsFunction<'a> {
 /// Gets the function type of a function.
 /// Currently supports normal or arrow functions
 pub fn get_fun_type(input: Span) -> IResult<Span, FunctionType> {
-  let (input, t) = alt(( // match
-    preceded(take_until("=>"), tag("=>")), // take until and tag
-    // tuple get ) and then } and make sure no white space exist between
-    preceded(take_until("function"), tag("function")) // get opening brace, alt closing brace and check if there's something before the opening. The arrow function will hopefully be run before, so no need to worry about accidentally getting an arrow function
+  let (input, t) = alt((
+    preceded(take_until("=>"), tag("=>")),
+    delimited(
+        preceded(take_until(")"), tag(")")), take_while(char::is_whitespace), tag("{")), // this will work so long as we get the { in the function call, just like arrow function
+    // rest, return rest of input as output
+
+    // preceded(take_until("function"), tag("function")) // get opening brace, alt closing brace and check if there's something before the opening. The arrow function will hopefully be run before, so no need to worry about accidentally getting an arrow function
   ))(input)?;
+  // just make error return on alt if both of these fail
 
   println!("t: {}", *t.fragment());
-  println!("input {}", input.fragment());
- let function_type = match *t.fragment() { // value because t fragment is a span
+  println!("input:-{}", input.fragment());
+  let trimmed_fragment = t.fragment().trim();
+ let function_type = match trimmed_fragment { // the reason for trim, is because the take_while returns a ton of spaces, which we need to check for
     "=>" => FunctionType::Arrow,
-    "function" => FunctionType::Normal,
+    "" => FunctionType::Normal, // match space for function because of delimited returning the second arg
     _ => FunctionType::Empty, // throw error instead
   };
   Ok((input, function_type))
+}
+
+pub fn is_space_or_newline(chr: u8) -> bool { // made because I didn't feel like using the alt tag
+    chr == b'\n' || chr == b' ' || chr == b'\t'
 }
 
 /// Gets the end position of a function, assuming you're already inside a function
@@ -131,6 +140,7 @@ pub fn get_fun_range(input: Span) -> IResult<Span, JsFunction> {
         }
     },
     FunctionType::Normal => {
+        println!("this is a normal function");
     },
     FunctionType::Empty => {
         println!("Failed to find function. Skipping");

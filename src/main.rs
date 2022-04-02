@@ -37,7 +37,8 @@ fn main() {
 
     let working_dir = Path::new(matches.value_of("dir").unwrap_or("/home/nevin/Desktop/testinit"));
     println!("{}", working_dir.display());
-    let parsed = get_fun_range(Span::new("myFun2 = () => {\nthis is text inside of a function\n}")).unwrap();
+    // let parsed = get_fun_range(Span::new("myFun2 = () => {\nthis is text inside of a function\n}")).unwrap();
+    let parsed2 = get_fun_range(Span::new("myFun2() {\nthis is text inside of a function\n}")).unwrap();
     // let text = parsed.1.start_pos.location_line();
     // let second = parsed.1.end_pos.location_line();
     // println!("{}:{}", text, second);
