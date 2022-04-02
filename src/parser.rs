@@ -36,10 +36,19 @@ pub enum FunctionType {
   Empty, // dangerous
 }
 
-pub struct JsFunction<'a> { // make a c style comment parser (maybe)
+pub struct SymbolPosition<'a> {
     pub start:  Span<'a>,
-    pub end:    Span<'a>,
-    pub is_empty:  bool
+    pub end:    Span<'a>
+}
+
+pub struct SymbolRange<'a> {
+    pub comment:    SymbolPosition<'a>,
+    pub function:   SymbolPosition<'a>
+}
+
+pub struct JsFunction<'a> {
+    pub start:  Span<'a>,
+    pub end:    Span<'a>
 }
 
 /// Gets the function type of a function.
@@ -60,10 +69,6 @@ pub fn get_fun_type(input: Span) -> IResult<Span, FunctionType> {
     _ => FunctionType::Empty, // throw error instead
   };
   Ok((input, function_type))
-}
-
-pub fn is_space_or_newline(chr: u8) -> bool { // made because I didn't feel like using the alt tag
-    chr == b'\n' || chr == b' ' || chr == b'\t'
 }
 
 /// Gets the end position of a function, assuming you're already inside a function
@@ -97,7 +102,7 @@ pub fn get_fun_close(input: Span) -> IResult<Span, Span> {
 /// Gets the range of a single function, assumes given a text file
 pub fn get_fun_range(input: Span) -> IResult<Span, JsFunction> {
   let (input, fun_type) = get_fun_type(input)?; // check for error and do something if not
-  match fun_type {
+  match fun_type { // try return match function type and just doing Ok(())
     FunctionType::Arrow => {
         let (input, spaces) = take_until("{")(input)?;
         if spaces.fragment().trim().is_empty() { // then there is in fact a { with whitespace
@@ -107,7 +112,6 @@ pub fn get_fun_range(input: Span) -> IResult<Span, JsFunction> {
             return Ok((input, JsFunction {
                 start: fun_start,
                 end: fun_end,
-                is_empty: false,
             }));
         }
         else {
@@ -120,21 +124,18 @@ pub fn get_fun_range(input: Span) -> IResult<Span, JsFunction> {
         return Ok((input, JsFunction {
             start: fun_start,
             end: fun_end,
-            is_empty: false,
         }));
     },
     FunctionType::Empty => {
         return Ok((input, JsFunction {
             start:  Span::new("Empty"),
             end:    Span::new("Empty"),
-            is_empty: true,
         }));
     }
   }
   return Ok((input, JsFunction { // should never run, if it does PLEASE report a bug
       start: Span::new("did not work"),
       end:   Span::new("did not work"),
-      is_empty: true,
   }));
 }
 
@@ -143,6 +144,8 @@ pub fn get_all_functions(file_input: Span) {
     let it = std::iter::from_fn(move || {
         match get_fun_range(input) {
             Ok((i, fun)) => {
+                // make it check for commnet here, and get one if there is any from the file_input
+                // span
                 input = i;
                 Some(fun)
             }
