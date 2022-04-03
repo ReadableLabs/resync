@@ -5,7 +5,7 @@ use nom::{
     bytes::complete::{tag, take_while, take, take_until, is_not},
     character::{is_hex_digit, is_alphabetic, is_space, is_alphanumeric},
     character::complete::{char, anychar},
-    combinator::{map_res, value, rest},
+    combinator::{map_res, value, rest, map_parser},
     error::ParseError,
     sequence::{tuple, preceded, delimited}};
 use std::{thread, time};
@@ -54,19 +54,16 @@ pub struct JsFunction<'a> {
 /// Gets the function type of a function.
 /// Currently supports normal or arrow functions
 pub fn get_fun_type(input: Span) -> IResult<Span, FunctionType> {
-  let (input, t) = alt((
+  let (input, t) = alt(( // tuple maybe?? comment + code
     preceded(take_until("=>"), tag("=>")), // maybe make it delimited so you can tag for { here
     delimited(
         preceded(take_until(")"), tag(")")), take_while(char::is_whitespace), tag("{")),
-    rest, // return rest of input as output - no function has been found
-
   ))(input)?;
 
   let trimmed_fragment = t.fragment().trim();
  let function_type = match trimmed_fragment { // the reason for trim, is because the take_while returns a ton of spaces, which we need to check for
     "=>" => FunctionType::Arrow,
     "" => FunctionType::Normal, // match space for function because of delimited returning the second arg
-    _ => FunctionType::Empty, // throw error instead
   };
   Ok((input, function_type))
 }
