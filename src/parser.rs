@@ -1,4 +1,5 @@
 use nom::{
+    multi::count,
     IResult,
     error::VerboseError,
     branch::alt,
@@ -51,21 +52,63 @@ pub struct JsFunction<'a> {
     pub end:    Span<'a>
 }
 
+// tomorrows problem
+pub fn span_count_string<I, Span, E, F>(mut f: F, count: usize) -> impl FnMut(I) -> IResult<I, Span, E>
+where
+  I: Clone + PartialEq,
+  F: Parser<I, O, E>,
+  E: ParseError<I>,
+{
+  move |i: I| {
+    let mut input = i.clone();
+    let mut res = "";
+
+    for _ in 0..count {
+      let input_ = input.clone();
+      match f.parse(input_) {
+        Ok((i, o)) => {
+          res += o.fragment();
+          input = i;
+        }
+        Err(Err::Error(e)) => {
+          return Err(Err::Error(E::append(i, ErrorKind::Count, e)));
+        }
+        Err(e) => {
+          return Err(e);
+        }
+      }
+    }
+
+    Ok((input, res))
+  }
+}
+
 /// Gets the function type of a function.
 /// Currently supports normal or arrow functions
-pub fn get_fun_type(input: Span) -> IResult<Span, FunctionType> {
-  let (input, t) = alt(( // tuple maybe?? comment + code
-    preceded(take_until("=>"), tag("=>")), // maybe make it delimited so you can tag for { here
+pub fn get_fun_and_comment(input: Span) -> IResult<Span, Span> {
+  let (input, (comment, fun)) = alt(( // tuple maybe?? comment + code
+          map_parser(
+              count(take_until("\n"), 2)
+              )
+    tuple((
+        preceded(
+            take_until("/*"), take_until("*/")
+            )
+    ))
+    delimited(
+    preceded(take_until("=>"), tag("=>")), take_while(char::is_whitespace), tag("{")), // maybe make it delimited so you can tag for { here
     delimited(
         preceded(take_until(")"), tag(")")), take_while(char::is_whitespace), tag("{")),
   ))(input)?;
-
+/*
   let trimmed_fragment = t.fragment().trim();
  let function_type = match trimmed_fragment { // the reason for trim, is because the take_while returns a ton of spaces, which we need to check for
     "=>" => FunctionType::Arrow,
     "" => FunctionType::Normal, // match space for function because of delimited returning the second arg
   };
-  Ok((input, function_type))
+  */
+  let (input, pos) = position(input)?;
+  Ok((input, pos))
 }
 
 /// Gets the end position of a function, assuming you're already inside a function
@@ -98,7 +141,8 @@ pub fn get_fun_close(input: Span) -> IResult<Span, Span> {
 
 /// Gets the range of a single function, assumes given a text file
 pub fn get_fun_range(input: Span) -> IResult<Span, JsFunction> {
-  let (input, fun_type) = get_fun_type(input)?; // check for error and do something if not
+  let (input, fun_start) = get_fun_and_comment(input)?; // check for error and do something if not
+  /*
   match fun_type { // try return match function type and just doing Ok(())
     FunctionType::Arrow => {
         let (input, spaces) = take_until("{")(input)?;
@@ -130,10 +174,12 @@ pub fn get_fun_range(input: Span) -> IResult<Span, JsFunction> {
         }));
     }
   }
-  return Ok((input, JsFunction { // should never run, if it does PLEASE report a bug
-      start: Span::new("did not work"),
-      end:   Span::new("did not work"),
-  }));
+  */
+  let (input, fun_end) = get_fun_close(input)?;
+  Ok((input, JsFunction {
+      start: fun_start,
+      end: fun_end
+  }))
 }
 
 pub fn get_all_functions(file_input: Span) {
