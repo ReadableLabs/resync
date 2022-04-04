@@ -6,7 +6,7 @@ use nom::{
     bytes::complete::{tag, take_while, take, take_until, is_not},
     character::{is_hex_digit, is_alphabetic, is_space, is_alphanumeric},
     character::complete::{char, anychar},
-    combinator::{map_res, value, rest, map_parser},
+    combinator::{map_res, value, rest, map, map_parser},
     error::ParseError,
     sequence::{tuple, preceded, delimited}};
 use std::{thread, time};
@@ -31,6 +31,11 @@ use nom_locate::{position, LocatedSpan};
 
 pub type Span<'a> = LocatedSpan<&'a str>;
 
+pub enum CommentType {
+    WithParams,
+    Normal // just a random multi line comment
+}
+
 pub enum FunctionType {
   Arrow,
   Normal,
@@ -42,6 +47,10 @@ pub struct SymbolPosition<'a> {
     pub end:    Span<'a>
 }
 
+pub enum FunType {
+    Docstring,
+    Free
+}
 pub struct SymbolRange<'a> {
     pub comment:    SymbolPosition<'a>,
     pub function:   SymbolPosition<'a>
@@ -51,15 +60,130 @@ pub struct JsFunction<'a> {
     pub start:  Span<'a>,
     pub end:    Span<'a>
 }
+
+pub fn get_fun(input: Span) -> IResult<Span, Span> {
+    /* input (comment.0|1)
+     * tuple((
+     *  tuple(("/**/"))
+     *  alt((
+     *    map((
+     *    map((take("\n\n")), get_fun_start) // see if position is the same,
+     *    |s: Span| (s, type::Function)
+     *    ))
+     *    map((
+     *      take_next_five_lines_up,
+     *      |s: Span| (s, type::Free)
+     *    ))
+     *  ))
+     * ))
+     */
+    let (input, (comment_start, comment_end)) = tuple((
+        take_until("/*"),
+        take_until("*/")
+    ))(input)?;
+    let (_input, new_lines) =
+        fold_many_m_n(0,
+           2,
+           take_until("\n"),
+           String::new,
+           |mut joined_lines: String: line| {
+               joined_lines += *line.fragment();
+               joined_lines
+           }
+           )(input)?;
+    let (_input, fun_type) = get_symbol_type(new_lines)?;
+    let (input, (fun_start, fun_end)) = match fun_start {
+        FunType::Docstring => {
+            let (input, fun_start) = get_symbol_start(input)?;
+            let (input, fun_end) = get_fun_close(input)?;
+            (input, (fun_start, fun_end))
+        }
+        FunType::Free => {
+            let (input, _) = take_until("\n")(input)?; // get the next line since we're currently on comment
+            let (input, code_start) = position(input)?;
+            let (input, code_end) =
+                fold_many_m_n(0,
+                              5,
+                              take_until("\n"),
+                              String::new,
+                              |mut joined_lines: String, line| {
+                                  joined_lines += *line.fragment();
+                                  joined_lines
+                              })(input)?;
+            let (input, code_end_pos) = position(code_end)?;
+            (input, (code_start, code_end_pos))
+            // start is just next line
+        }
+    };
+    /*
+    let (input, ((comment_start, comment_end), code_start)) = tuple((
+        tuple((
+            take_until("/*"),
+            take_until("*/")
+        )),
+        alt((
+            map(
+                preceded(
+                    map_parser(
+                        count(take_until("\n"), 2),
+                        check_symbol
+                    ),
+                    get_symbol_start // so it actually gets the start - not just on result
+                ),
+                |s: Span| (s, FunType::Docstring)
+            ),
+            preceded((
+                take_until("\n"), // get the next newline
+                |s: Span| (s, FunType::Free) // if it's on last line of file there's no new line
+            ))
+        ))
+    ))(input)?;
+    Ok((input, (comment_start, comment_end), code_start))
+        */
+}
+
+pub fn get_symbol_start(input: Span) -> IResult<Span, Span> {
+    let (input, fun) = alt((
+        delimited(
+            preceded(take_until("=>"), tag("=>")), take_while(char::is_whitespace), tag("{")),
+        delimited(
+            preceded(take_until(")"), tag(")")), take_while(char::is_whitespace), tag("{")), // do the 5 lines here
+            rest
+    ))(input)?;
+    let (input, pos) = position(input)?;
+    // let (input, pos) = position(input)?;
+    Ok((input, pos))
+}
+
+pub fn get_symbol_type(input: Span) -> IResult<Span, Span> {
+    let (input, fun) = alt((
+        delimited(
+            preceded(take_until("=>"), tag("=>")), take_while(char::is_whitespace), tag("{")),
+        delimited(
+            preceded(take_until(")"), tag(")")), take_while(char::is_whitespace), tag("{")), // do the 5 lines here
+            rest
+    ))(input)?;
+    let fragment = *fun.fragment();
+    let fun_type = match fragment {
+        "{" => FunType::Docstring,
+        _ => FunType::Free
+    };
+    // let (input, pos) = position(input)?;
+    Ok((input, fun_type))
+}
+
 /// Gets the function type of a function.
 /// Currently supports normal or arrow functions
 pub fn get_fun_and_comment(input: Span) -> IResult<Span, Span> {
     // see if it tags function or comment first, then if function check for whitespace.
   let (input, fun) = alt(( // tuple maybe?? comment + code
-    delimited(
-    preceded(take_until("=>"), tag("=>")), take_while(char::is_whitespace), tag("{")), // maybe make it delimited so you can tag for { here
-    delimited(
-        preceded(take_until(")"), tag(")")), take_while(char::is_whitespace), tag("{")),
+    alt((
+        delimited(
+        preceded(take_until("=>"), tag("=>")), take_while(char::is_whitespace), tag("{")), // maybe make it delimited so you can tag for { here
+        delimited(
+            preceded(take_until(")"), tag(")")), take_while(char::is_whitespace), tag("{")),
+        )),
+        rest // not a function
   ))(input)?;
 /*
   let trimmed_fragment = t.fragment().trim();
@@ -102,7 +226,9 @@ pub fn get_fun_close(input: Span) -> IResult<Span, Span> {
 
 /// Gets the range of a single function, assumes given a text file
 pub fn get_fun_range(input: Span) -> IResult<Span, JsFunction> {
-  let (input, fun_start) = get_fun_and_comment(input)?; // check for error and do something if not
+    let (input, ((comment_start, comment_end), fun_start)) = get_fun(input)?;
+    println!("start - {}, end - {}, fun_start - {}", comment_start.location_line(), comment_end.location_line, fun_start.location_line());
+  // let (input, fun_start) = get_fun_and_comment(input)?; // check for error and do something if not
   /*
   match fun_type { // try return match function type and just doing Ok(())
     FunctionType::Arrow => {
@@ -136,11 +262,17 @@ pub fn get_fun_range(input: Span) -> IResult<Span, JsFunction> {
     }
   }
   */
+  /*
   let (input, fun_end) = get_fun_close(input)?;
   Ok((input, JsFunction {
       start: fun_start,
       end: fun_end
   }))
+  */
+    Ok((input, JsFunction {
+        start: comment_start,
+        end: comment_end
+    }))
 }
 
 pub fn contains_comment(/* get all comments and check if end range of comment is above start range of this */) { // option
@@ -164,7 +296,7 @@ pub fn get_all_functions(file_input: Span) {
         }
     });
     for value in it {
-        println!("function: {} - {}", value.start.location_line(), value.end.location_line());
+        // println!("function: {} - {}", value.start.location_line(), value.end.location_line());
     }
 }
 
