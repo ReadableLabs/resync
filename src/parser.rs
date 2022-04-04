@@ -51,50 +51,10 @@ pub struct JsFunction<'a> {
     pub start:  Span<'a>,
     pub end:    Span<'a>
 }
-
-// tomorrows problem
-pub fn span_count_string<I, Span, E, F>(mut f: F, count: usize) -> impl FnMut(I) -> IResult<I, Span, E>
-where
-  I: Clone + PartialEq,
-  F: Parser<I, O, E>,
-  E: ParseError<I>,
-{
-  move |i: I| {
-    let mut input = i.clone();
-    let mut res = "";
-
-    for _ in 0..count {
-      let input_ = input.clone();
-      match f.parse(input_) {
-        Ok((i, o)) => {
-          res += o.fragment();
-          input = i;
-        }
-        Err(Err::Error(e)) => {
-          return Err(Err::Error(E::append(i, ErrorKind::Count, e)));
-        }
-        Err(e) => {
-          return Err(e);
-        }
-      }
-    }
-
-    Ok((input, res))
-  }
-}
-
 /// Gets the function type of a function.
 /// Currently supports normal or arrow functions
 pub fn get_fun_and_comment(input: Span) -> IResult<Span, Span> {
-  let (input, (comment, fun)) = alt(( // tuple maybe?? comment + code
-          map_parser(
-              count(take_until("\n"), 2)
-              )
-    tuple((
-        preceded(
-            take_until("/*"), take_until("*/")
-            )
-    ))
+  let (input, fun) = alt(( // tuple maybe?? comment + code
     delimited(
     preceded(take_until("=>"), tag("=>")), take_while(char::is_whitespace), tag("{")), // maybe make it delimited so you can tag for { here
     delimited(
