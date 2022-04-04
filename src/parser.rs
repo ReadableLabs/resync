@@ -52,54 +52,37 @@ pub struct JsFunction<'a> {
     pub end:    Span<'a>
 }
 
-// tomorrows problem
-pub fn span_count_string<I, Span, E, F>(mut f: F, count: usize) -> impl FnMut(I) -> IResult<I, Span, E>
-where
-  I: Clone + PartialEq,
-  F: Parser<I, O, E>,
-  E: ParseError<I>,
-{
-  move |i: I| {
-    let mut input = i.clone();
-    let mut res = "";
-
-    for _ in 0..count {
-      let input_ = input.clone();
-      match f.parse(input_) {
-        Ok((i, o)) => {
-          res += o.fragment();
-          input = i;
-        }
-        Err(Err::Error(e)) => {
-          return Err(Err::Error(E::append(i, ErrorKind::Count, e)));
-        }
-        Err(e) => {
-          return Err(e);
-        }
-      }
-    }
-
-    Ok((input, res))
-  }
-}
-
 /// Gets the function type of a function.
 /// Currently supports normal or arrow functions
 pub fn get_fun_and_comment(input: Span) -> IResult<Span, Span> {
+  let (input, (comment_start, comment_end) = tuple(take_until("/*"), take_until("*/"))(input)?;
+  let (input, new_line) = count(take_until("\n", 2))(input)?;
+  let (_input, _) =
+  alt((
+    delimited(
+      preceded(take_until("=>", tag("=>")), take_while(char::is_whitespace), tag("{")),
+      delimited(
+        preceded(take_until(")"), tag(")")), take_while(char::is_whitespace), tag("{"))
+      )
+  ))(new_line)?; // may have to check if position is right
+  let (input, fun_start) =
+  alt((
+    delimited(
+      preceded(take_until("=>", tag("=>")), take_while(char::is_whitespace), tag("{")),
+      delimited(
+        preceded(take_until(")"), tag(")")), take_while(char::is_whitespace), tag("{"))
+      )
+  ))(input)?; // may have to check if position is right
+  let (input, fun_end) = get_fun_close(input)?;
+  // do it to main input if that succeeded
+  /*
   let (input, (comment, fun)) = alt(( // tuple maybe?? comment + code
-          map_parser(
-              count(take_until("\n"), 2)
-              )
-    tuple((
-        preceded(
-            take_until("/*"), take_until("*/")
-            )
-    ))
     delimited(
     preceded(take_until("=>"), tag("=>")), take_while(char::is_whitespace), tag("{")), // maybe make it delimited so you can tag for { here
     delimited(
         preceded(take_until(")"), tag(")")), take_while(char::is_whitespace), tag("{")),
   ))(input)?;
+  */
 /*
   let trimmed_fragment = t.fragment().trim();
  let function_type = match trimmed_fragment { // the reason for trim, is because the take_while returns a ton of spaces, which we need to check for
