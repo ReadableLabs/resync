@@ -52,6 +52,7 @@ pub enum FunType {
     Docstring,
     Free
 }
+
 pub struct SymbolRange<'a> {
     pub comment:    SymbolPosition<'a>,
     pub function:   SymbolPosition<'a>
@@ -62,7 +63,7 @@ pub struct JsFunction<'a> {
     pub end:    Span<'a>
 }
 
-pub fn get_fun(input: Span) -> IResult<Span, SymbolRange> {
+pub fn get_fun(input: Span) -> IResult<Span, (SymbolPosition, SymbolPosition)> {
     /* input (comment.0|1)
      * tuple((
      *  tuple(("/**/"))
@@ -82,6 +83,7 @@ pub fn get_fun(input: Span) -> IResult<Span, SymbolRange> {
         take_until("/*"),
         take_until("*/")
     ))(input)?;
+     // failed here
     let (_input, new_lines) =
         fold_many_m_n(0,
            2,
@@ -92,7 +94,11 @@ pub fn get_fun(input: Span) -> IResult<Span, SymbolRange> {
                joined_lines
            }
            )(input)?;
-    let (_input, fun_type) = get_symbol_type(new_lines.as_str())?;
+     println!("ok");
+    let (_input, fun_type) = match get_symbol_type(new_lines.as_str()) {
+        Ok((input, fun_type)) => (input, fun_type),
+        Err(e) => ("", FunType::Free)
+    };
     let (input, (fun_start, fun_end)) = match fun_type {
         FunType::Docstring => {
             let (input, fun_start) = get_symbol_start(input)?;
@@ -108,16 +114,15 @@ pub fn get_fun(input: Span) -> IResult<Span, SymbolRange> {
             // start is just next line
         }
     };
-    Ok((input, SymbolRange {
-        comment: SymbolPosition {
-            start: comment_start,
-            end: comment_end
-        },
-        function: SymbolPosition {
-            start: fun_start,
-            end: fun_end
-        }
-    }))
+    let comment_position = SymbolPosition {
+        start: comment_start,
+        end: comment_end
+    };
+    let function_position = SymbolPosition {
+        start: fun_start,
+        end: fun_end
+    };
+    Ok((input, (comment_position, function_position)))
     /*
     let (input, ((comment_start, comment_end), code_start)) = tuple((
         tuple((
@@ -227,10 +232,10 @@ pub fn get_fun_close(input: Span) -> IResult<Span, Span> {
 }
 
 /// Gets the range of a single function, assumes given a text file
-pub fn get_fun_range(input: Span) -> IResult<Span, (Span, (SymbolRange, SymbolRange))> {
-    let (input, (comment, function)) = get_fun(input)?;
-    println!("start - {}, end - {}, fun_start - {}, fun_end - {}", comment.start.location_line(), comment.end.location_line, function.start.location_line(), function.end.location_line());
-    Ok((input, (comment, function)))
+pub fn get_fun_range(input: Span) -> IResult<Span, (SymbolPosition, SymbolPosition)> {
+    let (input, (comment_position, function_position)) = get_fun(input)?;
+    println!("start - {}, end - {}, fun_start - {}, fun_end - {}", comment_position.start.location_line(), comment_position.end.location_line(), function_position.start.location_line(), function_position.end.location_line());
+    Ok((input, (comment_position, function_position)))
   // let (input, fun_start) = get_fun_and_comment(input)?; // check for error and do something if not
   /*
   match fun_type { // try return match function type and just doing Ok(())
