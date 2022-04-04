@@ -54,6 +54,7 @@ pub struct JsFunction<'a> {
 /// Gets the function type of a function.
 /// Currently supports normal or arrow functions
 pub fn get_fun_and_comment(input: Span) -> IResult<Span, Span> {
+    // see if it tags function or comment first, then if function check for whitespace.
   let (input, fun) = alt(( // tuple maybe?? comment + code
     delimited(
     preceded(take_until("=>"), tag("=>")), take_while(char::is_whitespace), tag("{")), // maybe make it delimited so you can tag for { here
@@ -142,9 +143,16 @@ pub fn get_fun_range(input: Span) -> IResult<Span, JsFunction> {
   }))
 }
 
+pub fn contains_comment(/* get all comments and check if end range of comment is above start range of this */) { // option
+    // get comment from start range of the function
+}
+
 pub fn get_all_functions(file_input: Span) {
     let mut input = file_input;
     let it = std::iter::from_fn(move || {
+        // global state, if comment if adds to global vec. the function will always be comparing to
+        // the last item in that linked list, to see if the function has a comment on top of it.
+        // If it does, it will be added to the vector because it will be Ok will return something
         match get_fun_range(input) {
             Ok((i, fun)) => {
                 // make it check for commnet here, and get one if there is any from the file_input
