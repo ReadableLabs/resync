@@ -84,8 +84,10 @@ pub fn get_fun(input: Span) -> IResult<Span, (SymbolPosition, SymbolPosition)> {
         take_until("*/")
     ))(input)?;
      // failed here
+     // just take 2 and joined the results of the vec. Match the result and return ok or no
     let (_input, new_lines) =
-        fold_many_m_n(0,
+        match fold_many_m_n(
+           0,
            2,
            take_until("\n"),
            String::new,
@@ -93,7 +95,16 @@ pub fn get_fun(input: Span) -> IResult<Span, (SymbolPosition, SymbolPosition)> {
                joined_lines += *line.fragment();
                joined_lines
            }
-           )(input)?;
+           )(input) {
+            Ok((input, new_lines)) => {
+                println!("here");
+                (input, new_lines)
+            },
+            Err(e) => {
+                println!("error");
+                (input, "".to_owned())
+            }
+        };
      println!("ok");
     let (_input, fun_type) = match get_symbol_type(new_lines.as_str()) {
         Ok((input, fun_type)) => (input, fun_type),
@@ -291,6 +302,7 @@ pub fn contains_comment(/* get all comments and check if end range of comment is
 
 pub fn get_all_functions(file_input: Span) {
     let mut input = file_input;
+    /*
     let it = std::iter::from_fn(move || {
         // global state, if comment if adds to global vec. the function will always be comparing to
         // the last item in that linked list, to see if the function has a comment on top of it.
@@ -308,5 +320,7 @@ pub fn get_all_functions(file_input: Span) {
     for value in it {
         // println!("function: {} - {}", value.start.location_line(), value.end.location_line());
     }
+    */
+    let (input, (comment, function)) = get_fun_range(file_input).unwrap();
 }
 
