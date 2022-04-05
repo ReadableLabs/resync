@@ -37,7 +37,7 @@ fn main() {
 
     let working_dir = Path::new(matches.value_of("dir").unwrap_or("/home/nevin/Desktop/testinit"));
     println!("{}", working_dir.display());
-    get_all_functions(Span::new("/*asdgasdgasdg*/\npublic function myFun2() {\nsome code\n}\n /*sidg*/\npublic function myFun3() {\nsome more code\n}\n /*hoiasdhgoisag*/\npublic function myFun4() {\nasdgasagsdgdas\n}"));
+    get_all_functions(Span::new("/*asdgasdgasdg\n*/\npublic function myFun2() {\nsome code\n}\n /*sidg*/\npublic function myFun3() {\nsome more code\n}\n /*hoiasdhgoisag*/\npublic function myFun4() {\nasdgasagsdgdas\n}"));
     // let parsed = get_fun_range(Span::new("myFun2 = () => {\nthis is text inside of a function\n}")).unwrap();
     // let parsed2 = get_fun_range(Span::new("myFun2() {\nthis is text inside of a function\n}")).unwrap();
     // let text = parsed.1.start_pos.location_line();

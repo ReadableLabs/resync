@@ -7,9 +7,9 @@ use nom::{
     bytes::complete::{tag, take_while, take, take_until, is_not},
     character::{is_hex_digit, is_alphabetic, is_space, is_alphanumeric},
     character::complete::{char, anychar},
-    combinator::{map_res, value, rest, map, map_parser},
+    combinator::{map_res, value, rest, map, map_parser, success},
     error::ParseError,
-    sequence::{tuple, preceded, delimited}};
+    sequence::{tuple, preceded, delimited, terminated}};
 use std::{thread, time};
 use std::str;
 use std::vec::Vec;
@@ -48,6 +48,7 @@ pub struct SymbolPosition<'a> {
     pub end:    Span<'a>
 }
 
+#[derive(Debug)]
 pub enum FunType {
     Docstring,
     Free
@@ -80,36 +81,63 @@ pub fn get_fun(input: Span) -> IResult<Span, (SymbolPosition, SymbolPosition)> {
      * ))
      */
     let (input, (comment_start, comment_end)) = tuple((
-        take_until("/*"),
-        take_until("*/")
+        preceded(take_until("/*"), tag("/*")),
+        preceded(take_until("*/"), tag("*/"))
     ))(input)?;
      // failed here
      // just take 2 and joined the results of the vec. Match the result and return ok or no
+
+     /*
+     let (test, nput) = terminated(take_until("\n"), tag("\n"))(input)?;
+     let (test, nput) = terminated(take_until("\n"), tag("\n"))(test)?;
+     println!("input test - {}", nput.fragment());
+     println!("input 2 {}", input);
+     */
+     /*
+    let (_input, new_lines) = match count(take_until("\n"), 2)(input) {
+        Ok((input, lines)) => {
+            println!("input - {}", input);
+            let mut joined = String::from("");
+            for line in lines {
+                println!("fragment {}", line.fragment());
+                joined = format!("{}{}", joined, line.fragment());
+                println!("{}", joined);
+            }
+            println!("joined - {}", joined);
+            (input, joined)
+        },
+        Err(e) => {
+            println!("Error");
+            return Err(e);
+        }
+    };
+    */
+
     let (_input, new_lines) =
         match fold_many_m_n(
            0,
            2,
-           take_until("\n"),
+           terminated(take_until("\n"), tag("\n")), // use newline combinator
            String::new,
            |mut joined_lines: String, line: Span| {
-               joined_lines += *line.fragment();
+               joined_lines = format!("{}{}", joined_lines, line.fragment());
                joined_lines
            }
            )(input) {
             Ok((input, new_lines)) => {
-                println!("here");
                 (input, new_lines)
             },
             Err(e) => {
                 println!("error");
-                (input, "".to_owned())
+                return Err(e);
             }
         };
-     println!("ok");
+
     let (_input, fun_type) = match get_symbol_type(new_lines.as_str()) {
         Ok((input, fun_type)) => (input, fun_type),
         Err(e) => ("", FunType::Free)
     };
+    println!("symbol type - {:?}", fun_type);
     let (input, (fun_start, fun_end)) = match fun_type {
         FunType::Docstring => {
             let (input, fun_start) = get_symbol_start(input)?;
@@ -167,7 +195,7 @@ pub fn get_symbol_start(input: Span) -> IResult<Span, Span> {
             preceded(take_until("=>"), tag("=>")), take_while(char::is_whitespace), tag("{")),
         delimited(
             preceded(take_until(")"), tag(")")), take_while(char::is_whitespace), tag("{")), // do the 5 lines here
-            rest
+        preceded(take_until("\n"), tag("\n"))
     ))(input)?;
     let (input, pos) = position(input)?;
     // let (input, pos) = position(input)?;
@@ -176,10 +204,10 @@ pub fn get_symbol_start(input: Span) -> IResult<Span, Span> {
 
 pub fn get_symbol_type<'a>(input: &'a str) -> IResult<&'a str, FunType> {
     let (input, fun) = alt((
-        delimited(
-            preceded(take_until("=>"), tag("=>")), take_while(char::is_whitespace), tag("{")),
-        delimited(
-            preceded(take_until(")"), tag(")")), take_while(char::is_whitespace), tag("{")), // do the 5 lines here
+        preceded(
+            preceded(take_until("=>"), tag("=>")), preceded(take_while(char::is_whitespace), tag("{"))),
+        preceded( // maybe use value
+            preceded(take_until(")"), tag(")")), preceded(take_while(char::is_whitespace), tag("{"))), // do the 5 lines here
             rest
     ))(input)?;
     let fun_type = match fun {
@@ -245,7 +273,7 @@ pub fn get_fun_close(input: Span) -> IResult<Span, Span> {
 /// Gets the range of a single function, assumes given a text file
 pub fn get_fun_range(input: Span) -> IResult<Span, (SymbolPosition, SymbolPosition)> {
     let (input, (comment_position, function_position)) = get_fun(input)?;
-    println!("start - {}, end - {}, fun_start - {}, fun_end - {}", comment_position.start.location_line(), comment_position.end.location_line(), function_position.start.location_line(), function_position.end.location_line());
+    // println!("start - {}, end - {}, fun_start - {}, fun_end - {}", comment_position.start.location_line(), comment_position.end.location_line(), function_position.start.location_line(), function_position.end.location_line());
     Ok((input, (comment_position, function_position)))
   // let (input, fun_start) = get_fun_and_comment(input)?; // check for error and do something if not
   /*
@@ -302,7 +330,6 @@ pub fn contains_comment(/* get all comments and check if end range of comment is
 
 pub fn get_all_functions(file_input: Span) {
     let mut input = file_input;
-    /*
     let it = std::iter::from_fn(move || {
         // global state, if comment if adds to global vec. the function will always be comparing to
         // the last item in that linked list, to see if the function has a comment on top of it.
@@ -317,10 +344,9 @@ pub fn get_all_functions(file_input: Span) {
             _ => None,
         }
     });
-    for value in it {
-        // println!("function: {} - {}", value.start.location_line(), value.end.location_line());
+    for (comment_position, function_position) in it {
+        println!("start - {}, end - {}, fun_start - {}, fun_end - {}", comment_position.start.location_line(), comment_position.end.location_line(), function_position.start.location_line(), function_position.end.location_line());
     }
-    */
     let (input, (comment, function)) = get_fun_range(file_input).unwrap();
 }
 
