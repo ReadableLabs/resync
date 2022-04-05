@@ -147,7 +147,7 @@ pub fn get_fun(input: Span) -> IResult<Span, (SymbolPosition, SymbolPosition)> {
         FunType::Free => {
             let (input, _) = take_until("\n")(input)?; // get the next line since we're currently on comment
             let (input, code_start) = position(input)?;
-            let (input, results) = count(take_until("\n"), 5)(input)?;
+            let (input, results) = count(preceded(take_until("\n"), tag("\n")), 2)(input)?;
             let (input, code_end) = position(input)?;
             (input, (code_start, code_end))
             // start is just next line
