@@ -74,7 +74,6 @@ pub fn get_fun(input: Span) -> IResult<Span, (SymbolPosition, SymbolPosition)> {
         Err(e) => ("", FunType::Free)
     };
 
-    println!("symbol type - {:?}", fun_type);
     let (input, (fun_start, fun_end)) = match fun_type {
         FunType::Docstring => {
             let (input, fun_start) = get_symbol_start(input)?;
