@@ -37,8 +37,14 @@ pub struct SymbolPosition<'a> {
     pub end:    Span<'a>
 }
 
-#[derive(Debug)]
 pub enum FunType {
+    Normal,
+    Arrow,
+    Empty
+}
+
+#[derive(Debug)]
+pub enum CommentType{
     Docstring,
     Free
 }
@@ -69,18 +75,20 @@ pub fn get_fun(input: Span) -> IResult<Span, (SymbolPosition, SymbolPosition)> {
             }
         };
 
-    let (_input, fun_type) = match get_symbol_type(new_lines.as_str()) {
-        Ok((input, fun_type)) => (input, fun_type),
-        Err(e) => ("", FunType::Free)
+    println!("new lines -{}", new_lines);
+    let (_input, (fun_type, comment_type)) = match get_symbol_type(new_lines.as_str()) {
+        Ok((input, (fun_type, comment_type))) => (input, (fun_type, comment_type)),
+        Err(e) => ("", (FunType::Empty, CommentType::Free))
+        // Err(e) => ("", CommentType::Free)
     };
 
-    let (input, (fun_start, fun_end)) = match fun_type {
-        FunType::Docstring => {
-            let (input, fun_start) = get_symbol_start(input)?;
+    let (input, (fun_start, fun_end)) = match comment_type {
+        CommentType::Docstring => {
+            let (input, fun_start) = get_symbol_start(input, fun_type)?;
             let (input, fun_end) = get_fun_close(input)?;
             (input, (fun_start, fun_end))
         }
-        FunType::Free => {
+        CommentType::Free => {
             let (input, _) = take_until("\n")(input)?;
             let (input, code_start) = position(input)?;
             let (input, results) = count(preceded(take_until("\n"), tag("\n")), 2)(input)?;
@@ -99,7 +107,24 @@ pub fn get_fun(input: Span) -> IResult<Span, (SymbolPosition, SymbolPosition)> {
     Ok((input, (comment_position, function_position)))
 }
 
-pub fn get_symbol_start(input: Span) -> IResult<Span, Span> {
+// FunctionType
+pub fn get_symbol_start(input: Span, fun_type: FunType) -> IResult<Span, Span> {
+    match fun_type {
+        FunType::Arrow => {
+            let (input, fun) = delimited(
+                preceded(take_until("=>"), tag("=>")), take_while(char::is_whitespace), tag("{"))(input)?;
+            let (input, pos) = position(input)?;
+            return Ok((input, pos));
+        },
+        FunType::Normal => {
+            let (input, fun) = delimited(
+                preceded(take_until(")"), tag(")")), take_while(char::is_whitespace), tag("{"))(input)?;
+            let (input, pos) = position(input)?;
+            return Ok((input, pos));
+        },
+        _ => unreachable!()
+    };
+    /*
     let (input, fun) = alt((
         delimited(
             preceded(take_until("=>"), tag("=>")), take_while(char::is_whitespace), tag("{")),
@@ -107,21 +132,22 @@ pub fn get_symbol_start(input: Span) -> IResult<Span, Span> {
             preceded(take_until(")"), tag(")")), take_while(char::is_whitespace), tag("{")),
         preceded(take_until("\n"), tag("\n"))
     ))(input)?;
-    let (input, pos) = position(input)?;
-    Ok((input, pos))
+    */
 }
 
-pub fn get_symbol_type<'a>(input: &'a str) -> IResult<&'a str, FunType> {
+pub fn get_symbol_type<'a>(input: &'a str) -> IResult<&'a str, (FunType, CommentType)> {
     let (input, fun) = alt((
+            value("arrow",
         preceded(
-            preceded(take_until("=>"), tag("=>")), preceded(take_while(char::is_whitespace), tag("{"))),
-        preceded(
-            preceded(take_until(")"), tag(")")), preceded(take_while(char::is_whitespace), tag("{"))),
+            preceded(take_until("=>"), tag("=>")), preceded(take_while(char::is_whitespace), tag("{")))),
+        value("normal", preceded(
+            preceded(take_until(")"), tag(")")), preceded(take_while(char::is_whitespace), tag("{")))),
             rest
     ))(input)?;
     let fun_type = match fun {
-        "{" => FunType::Docstring,
-        _ => FunType::Free
+        "arrow" => (FunType::Arrow, CommentType::Docstring),
+        "normal" => (FunType::Normal, CommentType::Docstring),
+        _ => (FunType::Empty, CommentType::Free)
     };
     Ok((input, fun_type))
 }
@@ -176,7 +202,8 @@ pub fn get_fun_range(input: Span) -> IResult<Span, (SymbolPosition, SymbolPositi
     Ok((input, (comment_position, function_position)))
 }
 
-pub fn get_all_functions(file_input: Span) {
+pub fn get_all_functions(file_input: Span) -> Vec<(SymbolPosition, SymbolPosition)> {
+    let mut all_funs: Vec<(SymbolPosition, SymbolPosition)> = Vec::new();
     let mut input = file_input;
     let it = std::iter::from_fn(move || {
         match get_fun_range(input) {
@@ -187,9 +214,10 @@ pub fn get_all_functions(file_input: Span) {
             _ => None,
         }
     });
-    for (comment_position, function_position) in it {
+    all_funs.extend(it.into_iter());
+    for (comment_position, function_position) in &all_funs {
         println!("start - {}, end - {}, fun_start - {}, fun_end - {}", comment_position.start.location_line(), comment_position.end.location_line(), function_position.start.location_line(), function_position.end.location_line());
     }
-    let (input, (comment, function)) = get_fun_range(file_input).unwrap();
+    return all_funs;
 }
 

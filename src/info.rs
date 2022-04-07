@@ -37,7 +37,6 @@ pub fn get_line_info(path: &Path, file: &Path) -> Result<HashMap<u32, u64>, Erro
     for (i, line) in reader.lines().enumerate() {
         if let (Ok(line), Some(hunk)) = (line, blame.get_line(i + 1)) {
             let time = hunk.final_signature().when().seconds();
-            println!("{}:{}", line, time);
             lines.insert(i.try_into().unwrap(), time.try_into().unwrap());
             // could use softmax
         }
