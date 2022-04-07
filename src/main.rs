@@ -1,4 +1,5 @@
 use std::path::Path;
+use std::convert::TryFrom;
 use std::fs::{read_to_string, File};
 use std::io::{self, prelude::*, BufReader};
 use clap::{Arg, Command};
@@ -7,7 +8,8 @@ use resync::info;
 use resync::parser::{get_fun_range, get_all_functions};
 use nom::Finish;
 use nom::error::ParseError;
-use resync::parser::Span;
+use resync::types::Span;
+use resync::tools::{get_max_time, print_comment, print_function};
 
 fn main() {
     let matches = Command::new("Resync")
@@ -27,6 +29,7 @@ fn main() {
              .short('c')
              .long("check")
              .help("Checks a specific file for out of sync comments")
+             .takes_value(true)
              )
         .arg(Arg::new("info")
              .short('i')
@@ -64,22 +67,18 @@ fn main() {
     }
 
     if matches.is_present("check") {
-        let read = read_to_string("/home/nevin/Desktop/testinit/myFile.txt").expect("Failed to read file");
+        let file = matches.value_of("check").expect("Error: no file given");
+        let full_dir = working_dir.join(file);
+        let read = read_to_string(working_dir.join(file)).expect("Failed to read file");
+        let lines: Vec<&str> = read.split("\n").collect();
 
-        let file = File::open("/home/nevin/Desktop/testinit/myFile.txt").expect("Failed to find file");
-        let reader = BufReader::new(file);
-
-        let mut lines = reader.lines();
-        let third = lines.nth(3).unwrap();
-
-        println!("line - {}", third.unwrap());
-
-        let blame_lines = info::get_line_info(working_dir, Path::new("myFile.txt")).expect("Error blaming file");
+        let blame_lines = info::get_line_info(working_dir, Path::new(file)).expect("Error blaming file");
         let all_funs = get_all_functions(Span::new(&read));
 
         for (comment, function) in all_funs {
-            let mut comment_line = comment.start.location_line() - 1; // because it's 1 indexed
-            let mut comment_end_line = comment.end.location_line() - 1;
+            /*
+            let comment_line = comment.start.location_line() - 1; // because it's 1 indexed
+            let comment_end_line = comment.end.location_line() - 1;
 
             let mut max_comment_time = 0;
             for line in comment_line..comment_end_line {
@@ -88,8 +87,8 @@ fn main() {
                 }
             }
 
-            let mut function_line = function.start.location_line() - 1;
-            let mut function_end_line = function.end.location_line() - 1;
+            let function_line = function.start.location_line() - 1;
+            let function_end_line = function.end.location_line() - 1;
 
             let mut max_function_time = 0;
             for line in function_line..function_end_line {
@@ -97,10 +96,31 @@ fn main() {
                     max_function_time = *blame_lines.get(&line).expect("Failed to get line of blame");
                 }
             }
+            */
+            let comment_time = get_max_time(&blame_lines, &comment);
+            let function_time = get_max_time(&blame_lines, &function);
 
-            if max_comment_time < max_function_time {
+            if comment_time < function_time {
+                let line_number = function.start.location_line() - 1;
+                let char_number = function.start.get_column();
+                println!("{}:{}:{}", full_dir.display(), line_number, char_number);
+                print_comment(&lines, &comment);
+                println!("");
+                println!("Is out of sync with...");
+                print_function(&lines, &function);
+                println!("");
+                /*
+                for line in comment_line..comment_end_line {
+                    println!("{}", lines.nth(usize::try_from(comment_line + line).unwrap()).unwrap());
+                }
+                println!("Is out of sync with...");
+                for function_line in function_line..function_end_line { // may break, make sure is less than end line
+                    println!("{}", line);
+                    println!("{}", lines.nth(usize::try_from(function_line + line).unwrap()).unwrap());
+                }
                 // TODO: print comment from ranges
                 println!("{} - {} is out of sync", function_line, function_end_line);
+                */
             }
         }
 

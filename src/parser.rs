@@ -14,6 +14,7 @@ use std::{thread, time};
 use std::str;
 use std::vec::Vec;
 use nom_locate::{position, LocatedSpan};
+use crate::types::{CommentType, SymbolPosition, Span};
 
 /*
  * If you are not familiar with nom, please check it out on GitHub. That is how the parsing is
@@ -30,23 +31,10 @@ use nom_locate::{position, LocatedSpan};
  * const myFun2 = arg => {}
 */
 
-pub type Span<'a> = LocatedSpan<&'a str>;
-
-pub struct SymbolPosition<'a> {
-    pub start:  Span<'a>,
-    pub end:    Span<'a>
-}
-
 pub enum FunType {
     Normal,
     Arrow,
     Empty
-}
-
-#[derive(Debug)]
-pub enum CommentType{
-    Docstring,
-    Free
 }
 
 pub fn get_fun(input: Span) -> IResult<Span, (SymbolPosition, SymbolPosition)> {
@@ -58,7 +46,7 @@ pub fn get_fun(input: Span) -> IResult<Span, (SymbolPosition, SymbolPosition)> {
     let (_input, new_lines) =
         match fold_many_m_n(
            0,
-           2,
+           4, // search lines
            terminated(take_until("\n"), tag("\n")), // use newline combinator
            String::new,
            |mut joined_lines: String, line: Span| {
@@ -70,12 +58,10 @@ pub fn get_fun(input: Span) -> IResult<Span, (SymbolPosition, SymbolPosition)> {
                 (input, new_lines)
             },
             Err(e) => {
-                println!("error");
                 return Err(e);
             }
         };
 
-    println!("new lines -{}", new_lines);
     let (_input, (fun_type, comment_type)) = match get_symbol_type(new_lines.as_str()) {
         Ok((input, (fun_type, comment_type))) => (input, (fun_type, comment_type)),
         Err(e) => ("", (FunType::Empty, CommentType::Free))
@@ -136,11 +122,12 @@ pub fn get_symbol_start(input: Span, fun_type: FunType) -> IResult<Span, Span> {
 }
 
 pub fn get_symbol_type<'a>(input: &'a str) -> IResult<&'a str, (FunType, CommentType)> {
+    println!("{}", input);
     let (input, fun) = alt((
             value("arrow",
         preceded(
             preceded(take_until("=>"), tag("=>")), preceded(take_while(char::is_whitespace), tag("{")))),
-        value("normal", preceded(
+        value("normal", preceded( // char is whitespace is the reason - types
             preceded(take_until(")"), tag(")")), preceded(take_while(char::is_whitespace), tag("{")))),
             rest
     ))(input)?;
