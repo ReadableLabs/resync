@@ -34,5 +34,8 @@ TODO
 
 ### FAQ
 
+Q: Why not just use other parsers (like ANTLR) - why make your own?
+A: I wanted Resync to be able to run with a small file size, as well as be able to run with no packages the user would need to install manually. If we include a different library for parsing each file type, implementation will be more complicated, and the file size will be greatly impacted.
+
 The idea is that we can have one interface which is created with a language, and then just call parser.parse() and automatically get the correct language parser, or an error if none is found.
 
