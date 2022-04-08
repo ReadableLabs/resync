@@ -5,7 +5,7 @@ use std::io::{self, prelude::*, BufReader};
 use clap::{Arg, Command};
 use resync::sync;
 use resync::info;
-use resync::parser::{get_fun_range, get_all_functions};
+use resync::parsers::javascript::{get_fun_range, get_all_functions};
 use nom::Finish;
 use nom::error::ParseError;
 use resync::types::Span;
