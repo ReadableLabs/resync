@@ -8,7 +8,7 @@ use resync::info;
 use resync::parsers::javascript::{get_fun_range, get_all_functions};
 use nom::Finish;
 use nom::error::ParseError;
-use resync::types::Span;
+use resync::parsers::types::Span;
 use resync::tools::{get_max_time, print_comment, print_function};
 
 fn main() {
