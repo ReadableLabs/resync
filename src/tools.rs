@@ -1,10 +1,8 @@
 use std::collections::HashMap;
 use std::str;
-use std::str::{Lines};
-use crate::types::{SymbolPosition};
+use crate::parsers::types::{SymbolPosition};
 
 pub fn get_max_time(blame_info: &HashMap<u32, u64>, symbol: &SymbolPosition) -> u64 {
-    let mut max_time = 0;
     let start = symbol.start.location_line() - 1; // because symbol is 1 indexed
     let end = symbol.end.location_line() - 1;
 

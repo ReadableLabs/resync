@@ -25,6 +25,7 @@ pub fn get_line_info(path: &Path, file: &Path) -> Result<HashMap<u32, u64>, Erro
         },
         Err(_) => None // maybe this isn't good
     };
+
     let mut blame_opts = BlameOptions::new();
     blame_opts.oldest_commit(head.id()).newest_commit(*branch_oid.as_ref().unwrap_or(&head.id()));
     println!("{}", branch_oid.as_ref().unwrap_or(&head.id()));
@@ -34,8 +35,8 @@ pub fn get_line_info(path: &Path, file: &Path) -> Result<HashMap<u32, u64>, Erro
     let blob = repo.find_blob(object.id())?;
 
     let reader = BufReader::new(blob.content());
-    for (i, line) in reader.lines().enumerate() {
-        if let (Ok(line), Some(hunk)) = (line, blame.get_line(i + 1)) {
+    for (i, _) in reader.lines().enumerate() {
+        if let Some(hunk) = blame.get_line(i + 1) {
             let time = hunk.final_signature().when().seconds();
             lines.insert(i.try_into().unwrap(), time.try_into().unwrap());
             // could use softmax

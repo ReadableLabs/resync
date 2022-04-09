@@ -1,13 +1,9 @@
 use std::path::Path;
-use std::convert::TryFrom;
-use std::fs::{read_to_string, File};
-use std::io::{self, prelude::*, BufReader};
+use std::fs::{read_to_string};
 use clap::{Arg, Command};
 use resync::sync;
 use resync::info;
-use resync::parsers::javascript::{get_fun_range, get_all_functions};
-use nom::Finish;
-use nom::error::ParseError;
+use resync::parsers::base::get_parser;
 use resync::parsers::types::Span;
 use resync::tools::{get_max_time, print_comment, print_function};
 
@@ -73,7 +69,9 @@ fn main() {
         let lines: Vec<&str> = read.split("\n").collect();
 
         let blame_lines = info::get_line_info(working_dir, Path::new(file)).expect("Error blaming file");
-        let all_funs = get_all_functions(Span::new(&read));
+        let parser = get_parser("js");
+        let all_funs = parser.parse(Span::new(&read));
+        // let all_funs = get_all_functions(Span::new(&read));
 
         for (comment, function) in all_funs {
             /*
