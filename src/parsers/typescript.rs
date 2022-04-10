@@ -3,9 +3,10 @@ use nom::{
     IResult,
     multi::{fold_many_m_n},
     branch::alt,
-    bytes::complete::{tag, take_while, take_until},
+    bytes::complete::{tag, take_while, take_while1, take_until},
     combinator::{value, rest},
-    character::complete::alphanumeric1,
+    character::{is_alphanumeric, complete::alphanumeric1},
+    combinator::opt,
     sequence::{tuple, preceded, delimited, terminated}};
 use std::str;
 use std::vec::Vec;
@@ -66,24 +67,42 @@ pub fn arrow_function(input: Span) -> IResult<Span, (Span, Span)> {
                 match_statement
                 ))
             ))(input)?;
+
     Ok((input, (opening, body)))
 }
 
 pub fn normal_function(input: Span) -> IResult<Span, Span> {
-    let (input, (declaration, _, params, body)) tuple((
+    let (input, declaration) = tag("function")(input)?;
+    let (input, _) = take_while1(char::is_whitespace)(input)?;
+    let (input, (param_start, param_body, param_end)) = match_oaram
+    let (input, (declaration, _, params, _, element_type, (body_start, body_end))) = tuple((
         tag("function"),
         take_while1(char::is_whitespace),
         match_param,
-        match_body_start
-        ))(input)?
+        take_while(char::is_whitespace),
+        opt(get_type),
+        match_body
+        ))(input)?;
+
+        Ok((input, (declaration, params, element_type, body_start, body_end)))
 }
 
-pub fn match_param(input: Span) -> IResult<Span, Span> {
+pub fn get_type(input: Span) -> IResult<Span, Span> {
+    let (input, (type_specifier, _, element_type, _)) = tuple((
+        tag(":"),
+        take_while(char::is_whitespace),
+        take_while1(is_alphanumeric),
+        take_while(char::is_whitespace)
+    ))(input)?;
+    Ok((input, element_type))
+}
+
+pub fn get_params(input: Span) -> IResult<Span, (Span, Span, Span)> {
     tuple((
         tag("("),
-        take_until(")")
+        take_until(")"),
         tag(")")
-        ))(input)?
+        ))(input)
 }
 
 pub fn match_statement(input: Span) -> IResult<Span, Span> {
@@ -91,7 +110,36 @@ pub fn match_statement(input: Span) -> IResult<Span, Span> {
 }
 
 pub fn match_body(input: Span) -> IResult<Span, Span> {
-    let (input, start) = tag("{")(input)?;
+    let (input, start) = match_body_start(input)?;
+    let mut start_braces = 1;
+    let mut end_braces = 0;
+
+    let (input, end) = loop {
+        let (input, end_brace_char) = alt((
+                match_body_start,
+                match_body_end,
+                rest
+                ))(input)?;
+        match end_brace_char.fragment() {
+            &"{" => {
+                start_braces += 1;
+            },
+            &"}" => {
+                end_braces += 1;
+            },
+            _ => {}
+        }
+
+        if start_braces <= end_braces {
+            break (input, end_brace_char);
+        }
+    };
+
+    Ok((input, (start, (start, end))))
+}
+
+pub fn match_body_end(input: Span) -> IResult<Span, Span> {
+    tag("}")(input)
 }
 
 pub fn match_body_start(input: Span) -> IResult<Span, Span> {
