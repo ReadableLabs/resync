@@ -5,6 +5,7 @@ use nom::{
     branch::alt,
     bytes::complete::{tag, take_while, take_until},
     combinator::{value, rest},
+    character::complete::alphanumeric1,
     sequence::{tuple, preceded, delimited, terminated}};
 use std::str;
 use std::vec::Vec;
@@ -17,6 +18,7 @@ pub struct TsParser;
 
 impl Parser for TsParser {
     fn parse<'a>(&self, file_input: Span<'a>) -> Vec<(SymbolPosition<'a>, SymbolPosition<'a>)> {
+        println!("using ts parser");
         let mut all_funs: Vec<(SymbolPosition, SymbolPosition)> = Vec::new();
         let mut input = file_input;
         let it = std::iter::from_fn(move || {
@@ -36,10 +38,64 @@ impl Parser for TsParser {
     }
 }
 
+#[derive(Debug)]
 pub enum FunType {
     Normal,
     Arrow,
     Empty
+}
+
+pub fn multi_line_comment(input: Span) -> IResult<Span, (Span, Span ,Span)> {
+    let (input, start) = tag("/*")(input)?;
+    let (input, body) = take_until("*/")(input)?;
+    let (input, end) = tag("*/")(input)?;
+
+    let start_pos = position(start)?;
+    let end_pos = position(end)?;
+
+    Ok((input, (start, body, end)))
+
+}
+
+pub fn arrow_function(input: Span) -> IResult<Span, (Span, Span)> {
+    let (input, (opening, _, body)) = tuple((
+            tag("=>"),
+            take_while(char::is_whitespace),
+            alt((
+                match_body_start,
+                match_statement
+                ))
+            ))(input)?;
+    Ok((input, (opening, body)))
+}
+
+pub fn normal_function(input: Span) -> IResult<Span, Span> {
+    let (input, (declaration, _, params, body)) tuple((
+        tag("function"),
+        take_while1(char::is_whitespace),
+        match_param,
+        match_body_start
+        ))(input)?
+}
+
+pub fn match_param(input: Span) -> IResult<Span, Span> {
+    tuple((
+        tag("("),
+        take_until(")")
+        tag(")")
+        ))(input)?
+}
+
+pub fn match_statement(input: Span) -> IResult<Span, Span> {
+    alphanumeric1(input)
+}
+
+pub fn match_body(input: Span) -> IResult<Span, Span> {
+    let (input, start) = tag("{")(input)?;
+}
+
+pub fn match_body_start(input: Span) -> IResult<Span, Span> {
+    tag("{")(input)
 }
 
 pub fn get_symbol_pair(input: Span) -> IResult<Span, (SymbolPosition, SymbolPosition)> {
@@ -51,7 +107,7 @@ pub fn get_symbol_pair(input: Span) -> IResult<Span, (SymbolPosition, SymbolPosi
     let (_input, new_lines) =
         match fold_many_m_n(
            0,
-           4, // search lines
+           8, // search lines
            terminated(take_until("\n"), tag("\n")), // use newline combinator
            String::new,
            |mut joined_lines: String, line: Span| {
@@ -72,9 +128,11 @@ pub fn get_symbol_pair(input: Span) -> IResult<Span, (SymbolPosition, SymbolPosi
         Err(_) => ("", (FunType::Empty, CommentType::Free))
         // Err(e) => ("", CommentType::Free)
     };
+    println!("symbol type: {:?}", comment_type);
 
     let (input, (fun_start, fun_end)) = match comment_type {
         CommentType::Docstring => {
+            println!("doing docstring check");
             let (input, fun_start) = get_symbol_start(input, fun_type)?;
             let (input, fun_end) = get_fun_close(input)?;
             (input, (fun_start, fun_end))
@@ -82,7 +140,7 @@ pub fn get_symbol_pair(input: Span) -> IResult<Span, (SymbolPosition, SymbolPosi
         CommentType::Free => {
             let (input, _) = take_until("\n")(input)?;
             let (input, code_start) = position(input)?;
-            let (input, _) = count(preceded(take_until("\n"), tag("\n")), 2)(input)?;
+            let (input, _) = count(preceded(take_until("\n"), tag("\n")), 4)(input)?;
             let (input, code_end) = position(input)?;
             (input, (code_start, code_end))
         }
@@ -109,7 +167,7 @@ pub fn get_symbol_start(input: Span, fun_type: FunType) -> IResult<Span, Span> {
         },
         FunType::Normal => {
             let (input, _) = preceded(
-                preceded(take_until(")"), tag(")")), take_until("{"))(input)?;
+                preceded(take_until(")"), tag(")")), preceded(take_until("{"), tag("{")))(input)?;
             let (input, pos) = position(input)?;
             return Ok((input, pos));
         },
@@ -124,7 +182,7 @@ pub fn get_symbol_type<'a>(input: &'a str) -> IResult<&'a str, (FunType, Comment
         preceded(
             preceded(take_until("=>"), tag("=>")), preceded(take_while(char::is_whitespace), tag("{")))),
         value("normal", preceded( // char is whitespace is the reason - types
-            preceded(take_until(")"), tag(")")), tag("{"))),
+            preceded(take_until(")"), tag(")")), preceded(take_until("{"), tag("{")))),
             rest
     ))(input)?;
     let fun_type = match fun {

@@ -12,7 +12,7 @@ pub fn get_parser(language: &str) -> Box<dyn Parser> {
         "ts" => Box::new(TsParser {}),
         "tsx" => Box::new(TsParser {}),
         _ => {
-            println!("Error: language not supported. Please open an issue at https://github.com/ReadableLabs/resync, or open a PR adding it.");
+            println!("Error: language not supported. Please open an issue at https://github.com/ReadableLabs/resync, or consider opening a pull request to add it");
             exit(-1);
         }
     }

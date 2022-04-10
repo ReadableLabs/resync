@@ -6,6 +6,7 @@ use resync::info;
 use resync::parsers::base::get_parser;
 use resync::parsers::types::Span;
 use resync::tools::{get_max_time, print_comment, print_function};
+use std::ffi::OsStr;
 
 fn main() {
     let matches = Command::new("Resync")
@@ -69,7 +70,11 @@ fn main() {
         let lines: Vec<&str> = read.split("\n").collect();
 
         let blame_lines = info::get_line_info(working_dir, Path::new(file)).expect("Error blaming file");
-        let parser = get_parser("js");
+
+        let ext = Path::new(file).extension().and_then(OsStr::to_str).expect("Failed to find file extension");
+        println!("ext: {}", ext);
+
+        let parser = get_parser(ext);
         let all_funs = parser.parse(Span::new(&read));
         // let all_funs = get_all_functions(Span::new(&read));
 
