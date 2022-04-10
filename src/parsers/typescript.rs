@@ -3,9 +3,9 @@ use nom::{
     IResult,
     multi::{fold_many_m_n},
     branch::alt,
-    bytes::complete::{tag, take_while, take_while1, take_until},
+    bytes::complete::{tag, take, take_while, take_while1, take_until},
     combinator::{value, rest},
-    character::{is_alphanumeric, complete::alphanumeric1},
+    character::complete::alphanumeric1,
     combinator::opt,
     sequence::{tuple, preceded, delimited, terminated}};
 use std::str;
@@ -46,16 +46,17 @@ pub enum FunType {
     Empty
 }
 
-pub fn multi_line_comment(input: Span) -> IResult<Span, (Span, Span ,Span)> {
+pub fn multi_line_comment(input: Span) -> IResult<Span, (Span, Span, Span, Span, Span)> {
+
     let (input, start) = tag("/*")(input)?;
+
+    let (input, start_pos) = position(input)?;
+
     let (input, body) = take_until("*/")(input)?;
     let (input, end) = tag("*/")(input)?;
 
-    let start_pos = position(start)?;
-    let end_pos = position(end)?;
-
-    Ok((input, (start, body, end)))
-
+    let (input, end_pos) = position(input)?;
+    return Ok((input, (start, start_pos, body, end, end_pos)));
 }
 
 pub fn arrow_function(input: Span) -> IResult<Span, (Span, Span)> {
@@ -71,27 +72,22 @@ pub fn arrow_function(input: Span) -> IResult<Span, (Span, Span)> {
     Ok((input, (opening, body)))
 }
 
-pub fn normal_function(input: Span) -> IResult<Span, Span> {
+pub fn normal_function(input: Span) -> IResult<Span, (Span, Span, Span, Span, Span, Span)> {
     let (input, declaration) = tag("function")(input)?;
     let (input, _) = take_while1(char::is_whitespace)(input)?;
-    let (input, (param_start, param_body, param_end)) = match_oaram
-    let (input, (declaration, _, params, _, element_type, (body_start, body_end))) = tuple((
-        tag("function"),
-        take_while1(char::is_whitespace),
-        match_param,
-        take_while(char::is_whitespace),
-        opt(get_type),
-        match_body
-        ))(input)?;
+    let (input, (param_start, param_body, param_end)) = get_params(input)?;
+    let (input, _) = take_while(char::is_whitespace)(input)?;
+    let (input, _element_type) = opt(get_type)(input)?;
+    let (input, (body_start, body_end)) = match_body(input)?;
 
-        Ok((input, (declaration, params, element_type, body_start, body_end)))
+    Ok((input, (declaration, param_start, param_body, param_end, body_start, body_end)))
 }
 
 pub fn get_type(input: Span) -> IResult<Span, Span> {
-    let (input, (type_specifier, _, element_type, _)) = tuple((
+    let (input, (_type_specifier, _, element_type, _)) = tuple((
         tag(":"),
         take_while(char::is_whitespace),
-        take_while1(is_alphanumeric),
+        take_while1(char::is_alphanumeric),
         take_while(char::is_whitespace)
     ))(input)?;
     Ok((input, element_type))
@@ -109,8 +105,9 @@ pub fn match_statement(input: Span) -> IResult<Span, Span> {
     alphanumeric1(input)
 }
 
-pub fn match_body(input: Span) -> IResult<Span, Span> {
+pub fn match_body(input: Span) -> IResult<Span, (Span, Span)> {
     let (input, start) = match_body_start(input)?;
+    let (input, start_pos) = position(input)?;
     let mut start_braces = 1;
     let mut end_braces = 0;
 
@@ -118,8 +115,9 @@ pub fn match_body(input: Span) -> IResult<Span, Span> {
         let (input, end_brace_char) = alt((
                 match_body_start,
                 match_body_end,
-                rest
+                take(1usize)
                 ))(input)?;
+        println!("{}", end_brace_char.fragment());
         match end_brace_char.fragment() {
             &"{" => {
                 start_braces += 1;
@@ -131,11 +129,12 @@ pub fn match_body(input: Span) -> IResult<Span, Span> {
         }
 
         if start_braces <= end_braces {
-            break (input, end_brace_char);
+            let (input, pos) = position(input)?;
+            break (input, pos);
         }
     };
 
-    Ok((input, (start, (start, end))))
+    Ok((input, (start, end)))
 }
 
 pub fn match_body_end(input: Span) -> IResult<Span, Span> {
