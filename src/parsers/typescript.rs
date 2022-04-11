@@ -136,8 +136,6 @@ pub fn match_body(input: Span) -> IResult<Span, (Span, Span)> {
             return Ok((input, (start, pos)));
         }
     };
-
-    Ok((input, (start, Span::new("Error")))) // really shit
 }
 
 pub fn match_body_end(input: Span) -> IResult<Span, Span> {
