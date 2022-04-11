@@ -46,6 +46,7 @@ fn params_test() {
 #[test]
 fn match_body_test() {
     let (input, (start, end)) = match_body(Span::new("{hello if() {ioajsdg}}")).expect("Failed to parse body");
+    println!("s{}", input.fragment());
     assert_eq!(input.fragment(), &"");
     assert_eq!(start.get_column(), 1);
     assert_eq!(end.get_column(), 22)

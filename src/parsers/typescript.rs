@@ -110,14 +110,17 @@ pub fn match_body(input: Span) -> IResult<Span, (Span, Span)> {
     let (input, start_pos) = position(input)?;
     let mut start_braces = 1;
     let mut end_braces = 0;
+    println!("{}", input.fragment());
 
-    let (input, end) = loop {
+    loop {
         let (input, end_brace_char) = alt((
                 match_body_start,
                 match_body_end,
                 take(1usize)
                 ))(input)?;
-        println!("{}", end_brace_char.fragment());
+
+        println!("input: {}", input.fragment());
+
         match end_brace_char.fragment() {
             &"{" => {
                 start_braces += 1;
@@ -130,11 +133,11 @@ pub fn match_body(input: Span) -> IResult<Span, (Span, Span)> {
 
         if start_braces <= end_braces {
             let (input, pos) = position(input)?;
-            break (input, pos);
+            return Ok((input, (start, pos)));
         }
     };
 
-    Ok((input, (start, end)))
+    Ok((input, (start, Span::new("Error")))) // really shit
 }
 
 pub fn match_body_end(input: Span) -> IResult<Span, Span> {
