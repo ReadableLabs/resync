@@ -4,7 +4,7 @@ use nom::{
     multi::{fold_many_m_n},
     branch::alt,
     bytes::complete::{tag, take, take_while, take_while1, take_until},
-    combinator::{value, rest},
+    combinator::{value, rest, iterator},
     character::complete::alphanumeric1,
     combinator::opt,
     sequence::{tuple, preceded, delimited, terminated}};
