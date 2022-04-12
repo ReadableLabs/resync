@@ -106,22 +106,24 @@ pub fn match_statement(input: Span) -> IResult<Span, Span> {
 }
 
 pub fn match_body(input: Span) -> IResult<Span, (Span, Span)> {
-    let (input, start) = match_body_start(input)?;
-    let (input, start_pos) = position(input)?;
+    // we are using .0 and .1 becaus the tuple doesn't work with let in loop
+    let mut user_input = match_body_start(input)?;
+    let start = user_input.1;
+    let (input, start_pos) = position(user_input.0)?;
     let mut start_braces = 1;
     let mut end_braces = 0;
-    println!("{}", input.fragment());
+    println!("{}", user_input.0.fragment());
 
     loop {
-        let (input, end_brace_char) = alt((
+        user_input = alt((
                 match_body_start,
                 match_body_end,
                 take(1usize)
-                ))(input)?;
+                ))(user_input.0)?;
 
-        println!("input: {}", input.fragment());
+        println!("input: {}", user_input.0.fragment());
 
-        match end_brace_char.fragment() {
+        match user_input.1.fragment() {
             &"{" => {
                 start_braces += 1;
             },
@@ -132,8 +134,9 @@ pub fn match_body(input: Span) -> IResult<Span, (Span, Span)> {
         }
 
         if start_braces <= end_braces {
-            let (input, pos) = position(input)?;
-            return Ok((input, (start, pos)));
+            // may break since position might update input
+            let (_, end_pos) = position(user_input.0)?;
+            return Ok((user_input.0, (start_pos, end_pos)));
         }
     };
 }
