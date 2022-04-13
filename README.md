@@ -26,6 +26,7 @@ Resync tells you if specific params/returns are out of sync, or if comments are 
 │   └── parsers # See parsers.md for more details
 └── tests
 ```
+[parsers.md](./doc/parsers.md)
 
 ### TODO
 - Make work on base branch without sync (replace all 0's with current unix time) - sync will be used for Readable
