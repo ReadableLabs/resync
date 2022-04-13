@@ -23,7 +23,7 @@ Resync tells you if specific params/returns are out of sync, or if comments are 
 ```
 ├── docs
 ├── src
-│   └── parsers # See parsers.md for more details
+│   └── parsers # See doc/parsers.md for more details
 └── tests
 ```
 [parsers.md](./doc/parsers.md)
