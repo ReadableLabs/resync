@@ -59,17 +59,19 @@ pub fn multi_line_comment(input: Span) -> IResult<Span, (Span, Span, Span, Span,
     return Ok((input, (start, start_pos, body, end, end_pos)));
 }
 
-pub fn arrow_function(input: Span) -> IResult<Span, (Span, Span)> {
-    let (input, (opening, _, body)) = tuple((
+// make params match
+
+pub fn arrow_function(input: Span) -> IResult<Span, (Span, (Span, Span))> {
+    let (input, (opening, _, (body_start, body_end))) = tuple((
             tag("=>"),
             take_while(char::is_whitespace),
             alt((
-                match_body_start,
+                match_body,
                 match_statement
                 ))
             ))(input)?;
 
-    Ok((input, (opening, body)))
+    Ok((input, (opening, (body_start, body_end))))
 }
 
 pub fn normal_function(input: Span) -> IResult<Span, (Span, Span, Span, Span, Span, Span)> {
@@ -101,8 +103,13 @@ pub fn get_params(input: Span) -> IResult<Span, (Span, Span, Span)> {
         ))(input)
 }
 
-pub fn match_statement(input: Span) -> IResult<Span, Span> {
-    alphanumeric1(input)
+pub fn match_statement(input: Span) -> IResult<Span, (Span, Span)> {
+    let (input, start_pos) = position(input)?;
+    let (input, statement) = alphanumeric1(input)?;
+    let (input, end) = position(input)?;
+
+    Ok((input, (start_pos, end)))
+
 }
 
 pub fn match_body(input: Span) -> IResult<Span, (Span, Span)> {
@@ -112,7 +119,6 @@ pub fn match_body(input: Span) -> IResult<Span, (Span, Span)> {
     let (input, start_pos) = position(user_input.0)?;
     let mut start_braces = 1;
     let mut end_braces = 0;
-    println!("{}", user_input.0.fragment());
 
     loop {
         user_input = alt((
@@ -120,8 +126,6 @@ pub fn match_body(input: Span) -> IResult<Span, (Span, Span)> {
                 match_body_end,
                 take(1usize)
                 ))(user_input.0)?;
-
-        println!("input: {}", user_input.0.fragment());
 
         match user_input.1.fragment() {
             &"{" => {
