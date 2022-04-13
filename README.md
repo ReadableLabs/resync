@@ -19,5 +19,13 @@ Resync tells you if specific params/returns are out of sync, or if comments are 
 - [ ] Java
 
 
+#### Project Structure
+```
+├── docs
+├── src
+│   └── parsers # place any parsing files here. See parsers.md for more details
+└── tests
+```
+
 ### TODO
 - Make work on base branch without sync (replace all 0's with current unix time) - sync will be used for Readable
