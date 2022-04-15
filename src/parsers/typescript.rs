@@ -47,6 +47,8 @@ pub enum FunType {
 }
 
 pub fn multi_line_comment(input: Span) -> IResult<Span, (Span, Span, Span, Span, Span)> {
+    // do take until since we're looking for comments first, not functions, and then tag one of the
+    // three on the next line. it just optionally takes until a character, and then it checks
 
     let (input, start) = tag("/*")(input)?;
 
@@ -61,6 +63,20 @@ pub fn multi_line_comment(input: Span) -> IResult<Span, (Span, Span, Span, Span,
 
 // make params match
 
+
+pub fn normal_function(input: Span) {
+    /*
+    let (input, (dec, _, name)) = tuple((
+            tag("function"),
+            take_while(char::is_whitespace),
+            alphanumeric1 // does not support anonymous functions
+            ))
+    */
+}
+
+pub fn get_params(input: Span) {
+}
+
 pub fn arrow_function(input: Span) -> IResult<Span, (Span, (Span, Span))> {
     let (input, (opening, _, (body_start, body_end))) = tuple((
             tag("=>"),
@@ -74,10 +90,10 @@ pub fn arrow_function(input: Span) -> IResult<Span, (Span, (Span, Span))> {
     Ok((input, (opening, (body_start, body_end))))
 }
 
-pub fn normal_function(input: Span) -> IResult<Span, (Span, Span, Span, Span, Span, Span)> {
+pub fn normal_function_dep(input: Span) -> IResult<Span, (Span, Span, Span, Span, Span, Span)> {
     let (input, declaration) = tag("function")(input)?;
     let (input, _) = take_while1(char::is_whitespace)(input)?;
-    let (input, (param_start, param_body, param_end)) = get_params(input)?;
+    let (input, (param_start, param_body, param_end)) = get_params_dep(input)?;
     let (input, _) = take_while(char::is_whitespace)(input)?;
     let (input, _element_type) = opt(get_type)(input)?;
     let (input, (body_start, body_end)) = match_body(input)?;
@@ -95,7 +111,7 @@ pub fn get_type(input: Span) -> IResult<Span, Span> {
     Ok((input, element_type))
 }
 
-pub fn get_params(input: Span) -> IResult<Span, (Span, Span, Span)> {
+pub fn get_params_dep(input: Span) -> IResult<Span, (Span, Span, Span)> {
     tuple((
         tag("("),
         take_until(")"),

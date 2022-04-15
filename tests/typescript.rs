@@ -18,6 +18,7 @@ fn type_test() {
     assert_eq!(element_type.fragment(), &"string");
 }
 
+/*
 #[test]
 fn params_test() {
     let (input, (open_param, body, close_param)) = get_params(Span::new("(aoaidshgoidsahgasdgoi)")).expect("Failed to parse params");
@@ -26,6 +27,7 @@ fn params_test() {
     assert_eq!(body.fragment(), &"aoaidshgoidsahgasdgoi");
     assert_eq!(close_param.fragment(), &")");
 }
+*/
 
 #[test]
 fn match_body_test() {

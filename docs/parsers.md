@@ -1,6 +1,5 @@
 ### PARSER DESIGN
 
-
 ### Table Of Contents
 - About Parsers
 - How they work in detail
