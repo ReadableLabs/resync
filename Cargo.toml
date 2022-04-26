@@ -8,5 +8,7 @@ edition = "2021"
 [dependencies]
 clap = "3.1.6"
 git2 = "0.13"
+syn = { version = "1.0.91", features = ["full", "extra-traits", "parsing", "printing"]}
+proc-macro2 = { version = "1.0.37", features = ["span-locations"] }
 nom = "7"
 nom_locate = "4.0.0"

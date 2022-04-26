@@ -75,31 +75,11 @@ fn main() {
         println!("ext: {}", ext);
 
         let parser = get_parser(ext);
-        let all_funs = parser.parse(Span::new(&read));
+        let all_funs = parser.parse(&read);
         // let all_funs = get_all_functions(Span::new(&read));
 
+        /*
         for (comment, function) in all_funs {
-            /*
-            let comment_line = comment.start.location_line() - 1; // because it's 1 indexed
-            let comment_end_line = comment.end.location_line() - 1;
-
-            let mut max_comment_time = 0;
-            for line in comment_line..comment_end_line {
-                if blame_lines.get(&line).expect("Failed to get line at blame") > &max_comment_time {
-                    max_comment_time = *blame_lines.get(&line).expect("Failed to get line of blame");
-                }
-            }
-
-            let function_line = function.start.location_line() - 1;
-            let function_end_line = function.end.location_line() - 1;
-
-            let mut max_function_time = 0;
-            for line in function_line..function_end_line {
-                if blame_lines.get(&line).expect("Failed to get line at blame") > &max_function_time {
-                    max_function_time = *blame_lines.get(&line).expect("Failed to get line of blame");
-                }
-            }
-            */
             let comment_time = get_max_time(&blame_lines, &comment);
             let function_time = get_max_time(&blame_lines, &function);
 
@@ -112,20 +92,9 @@ fn main() {
                 println!("Is out of sync with...");
                 print_function(&lines, &function);
                 println!("");
-                /*
-                for line in comment_line..comment_end_line {
-                    println!("{}", lines.nth(usize::try_from(comment_line + line).unwrap()).unwrap());
-                }
-                println!("Is out of sync with...");
-                for function_line in function_line..function_end_line { // may break, make sure is less than end line
-                    println!("{}", line);
-                    println!("{}", lines.nth(usize::try_from(function_line + line).unwrap()).unwrap());
-                }
-                // TODO: print comment from ranges
-                println!("{} - {} is out of sync", function_line, function_end_line);
-                */
             }
         }
+        */
 
     }
 

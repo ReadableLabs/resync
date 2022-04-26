@@ -28,7 +28,7 @@ pub fn get_line_info(path: &Path, file: &Path) -> Result<HashMap<u32, u64>, Erro
 
     let mut blame_opts = BlameOptions::new();
     blame_opts.oldest_commit(head.id()).newest_commit(*branch_oid.as_ref().unwrap_or(&head.id()));
-    println!("{}", branch_oid.as_ref().unwrap_or(&head.id()));
+    // println!("{}", branch_oid.as_ref().unwrap_or(&head.id()));
 
     let blame = repo.blame_file(file, Some(&mut blame_opts))?;
     let object = repo.revparse_single(&spec[..])?;

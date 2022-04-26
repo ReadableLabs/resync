@@ -20,6 +20,7 @@ Resync tells you if specific params/returns are out of sync, or if comments are 
 - [ ] Kotlin
 - [ ] Java
 
+Resync uses optional dependencies to make sure the executable stays small.
 
 #### Project Structure
 ```
