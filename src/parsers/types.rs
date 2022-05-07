@@ -20,3 +20,17 @@ pub struct SymbolPosition<'a> {
     pub start:  Span<'a>,
     pub end:    Span<'a>
 }
+
+#[derive(Debug)]
+pub struct LineSpan {
+    pub line: usize,
+    pub character: usize,
+}
+
+
+#[derive(Debug)]
+pub struct SymbolSpan {
+    pub start: LineSpan,
+    pub end: LineSpan,
+}
+

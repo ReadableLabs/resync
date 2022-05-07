@@ -1,6 +1,4 @@
-### Why not just use parsers people have made?
-
-Resync uses hand made parsers, which get comment params + code type + range underneath.
+## Parsers
 
 Comment
 - Text

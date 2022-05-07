@@ -1,11 +1,10 @@
 use std::str;
 use std::vec::Vec;
 use crate::parsers::{
-    types::{CommentType, SymbolPosition, Span},
+    types::{CommentType, SymbolPosition, Span, SymbolSpan, LineSpan},
     base::Parser};
 use syn::{Expr, Result};
 use syn::spanned::Spanned;
-use proc_macro;
 
 // use syn::__private::ToTokens;
 
@@ -13,17 +12,80 @@ pub struct RsParser;
 
 impl Parser for RsParser {
     #[proc_macro_derive(MyMacro)]
-    fn parse(&self, file_input: &str) -> bool {
+    fn parse(&self, file_input: &str) -> Vec<(SymbolSpan, SymbolSpan)> {
         println!("using rust parser");
         let ast = syn::parse_file(file_input).unwrap();
         // println!("{:#?}", ast);
-        println!("{:#?}", ast.items[0]);
+        // println!("{:#?}", ast.items[0]);
         // println!("{:#?}", &ast.items[0].span().start());
         match &ast.items[0] {
             syn::Item::Fn(expr) => {
-                println!("{:#?}", expr.attrs.len());
-                println!("{:#?}", expr.span().start());
-                println!("fun");
+
+                if expr.attrs.len() <= 0 {
+                    return false;
+                }
+
+                let mut start = expr.attrs[0].path.get_ident().expect("Failed to get identifier").span().start();
+                let mut end = expr.attrs[0].path.get_ident().expect("Failed to get identifier").span().end();
+                for attr in &expr.attrs {
+                    let ident = match attr.path.get_ident() {
+                        Some(i) => i,
+                        _ => continue
+                    };
+
+                    if ident.to_string() != "doc" {
+                        continue;
+                    }
+
+                    let span = ident.span();
+
+                    if span.start().line < start.line {
+                        start = span.start();
+                    }
+
+                    if span.end().line > end.line {
+                        end = span.end();
+                    }
+
+                    println!("{:#?}", ident.span().start().line);
+                    println!("{:#?}", ident.span().end().line);
+                }
+                let comment = SymbolSpan {
+                    start: LineSpan {
+                        line: start.line,
+                        character: start.column
+                    },
+                    end: LineSpan {
+                        line: end.line,
+                        character: end.column
+                    }
+                };
+
+                let fun = expr.block.span();
+
+                let function = SymbolSpan {
+                    start: LineSpan {
+                        line: fun.start().line,
+                        character: fun.start().column
+                    },
+                    end: {
+                        LineSpan {
+                            line: fun.end().line,
+                            character: fun.end().column
+                        }
+                    }
+                };
+
+                println!("{:#?}", comment);
+                println!("{:#?}", function);
+                // println!("{:#?}", expr.block.span().start().line);
+                // println!("{:#?}", expr.block.span().end().line);
+                // println!("{:#?}", expr.attrs[0].path.segments[0].ident.to_string());
+                // println!("{:#?}", expr);
+                // println!("{:#?}", expr.span().start());
+                // println!("{:#?}", expr.span().end());
+                // println!("fun");
+                return (comment, function);
             },
             _ => {
                 println!("none");
