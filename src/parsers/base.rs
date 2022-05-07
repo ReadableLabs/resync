@@ -2,7 +2,7 @@ use crate::parsers::{
     //javascript::JsParser,
     //typescript::TsParser,
     rust::RsParser,
-    types::{Span, SymbolPosition}};
+    types::{Span, SymbolPosition, SymbolSpan}};
 use std::vec::Vec;
 use std::process::exit;
 
@@ -23,5 +23,5 @@ pub fn get_parser(language: &str) -> Box<dyn Parser> {
 }
 
 pub trait Parser {
-    fn parse(&self, file_input: &str) -> bool;
+    fn parse(&self, file_input: &str) -> Vec<(SymbolSpan, SymbolSpan)>;
 }
