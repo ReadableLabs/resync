@@ -76,6 +76,11 @@ fn main() {
 
         let parser = get_parser(ext);
         let all_funs = parser.parse(&read);
+
+        for fun in all_funs {
+            println!("{}", fun);
+        }
+
         // let all_funs = get_all_functions(Span::new(&read));
 
         /*
