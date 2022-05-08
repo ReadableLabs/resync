@@ -30,41 +30,61 @@ impl Parser for RsParser {
                     };
                 },
                 syn::Item::Impl(expr) => {
-                    println!("impl");
+                    let mut symbols = parseImpl(&expr);
+                    vec.append(&mut symbols);
+                    // println!("impl");
                 }
                 _ => {
-                    println!("none");
+                    // println!("none");
                 }
             }
         }
+
+        for symbol in &vec {
+            println!("{:#?}", symbol);
+        }
+
         return vec;
     }
 }
 
-fn parseImpl(expr: &syn::ItemImpl) -> Option<Vec<(SymbolSpan, SymbolSpan)>> {
-    let mut vec = Vec::new();
+fn parseImpl(expr: &syn::ItemImpl) -> Vec<(SymbolSpan, SymbolSpan)> {
+    let mut vec: Vec<(SymbolSpan, SymbolSpan)> = Vec::new();
     if expr.attrs.len() > 0 {
         match getCommentRange(&expr.attrs) {
             Some(comment) => {
 
-                let function = expr.body.span();
+                let fun = expr.span();
 
-                vec.push(comment);
+                let function = SymbolSpan {
+                    start: LineSpan {
+                        line: fun.start().line,
+                        character: fun.start().column
+                    },
+                    end: LineSpan {
+                        line: fun.end().line,
+                        character: fun.end().column
+                    }
+                };
+
+                vec.push((comment, function));
+            },
+            _ => {
             }
         }
         // check for comment above or in impl, and add that into the vec
     }
 
-    for item in expr.items {
+    for item in &expr.items {
         match item {
             // now it's basically a function
-            syn::ImplItemMethod(method) => {
+            syn::ImplItem::Method(method) => {
                 let comment = match getCommentRange(&method.attrs) {
                     Some(comment) => comment,
                     _ => {
                         continue;
                     }
-                }
+                };
 
                 let fun = method.block.span();
 
@@ -79,14 +99,19 @@ fn parseImpl(expr: &syn::ItemImpl) -> Option<Vec<(SymbolSpan, SymbolSpan)>> {
                     }
                 };
 
-                vec.push()
-            }
+                vec.push((comment, function))
+            },
+            _ => {}
         }
     }
 
+    return vec;
 }
 
 fn getCommentRange(attrs: &Vec<syn::Attribute>) -> Option<SymbolSpan> {
+    if attrs.len() <= 0 {
+        return None;
+    }
     let mut start = attrs[0].path.get_ident().expect("Failed to get identifier").span().start();
     let mut end = attrs[0].path.get_ident().expect("Failed to get identifier").span().end();
 
@@ -127,7 +152,6 @@ fn getCommentRange(attrs: &Vec<syn::Attribute>) -> Option<SymbolSpan> {
 
 fn parseFun(expr: &syn::ItemFn) -> Option<(SymbolSpan, SymbolSpan)> {
     if expr.attrs.len() <= 0 {
-        println!("len is none");
         return None;
     }
 
@@ -153,8 +177,8 @@ fn parseFun(expr: &syn::ItemFn) -> Option<(SymbolSpan, SymbolSpan)> {
         }
     };
 
-    println!("{:#?}", comment);
-    println!("{:#?}", function);
+    // println!("{:#?}", comment);
+    // println!("{:#?}", function);
     return Some((comment, function));
     // println!("{:#?}", expr.block.span().start().line);
     // println!("{:#?}", expr.block.span().end().line);
