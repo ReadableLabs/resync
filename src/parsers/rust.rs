@@ -40,9 +40,11 @@ impl Parser for RsParser {
             }
         }
 
+        /*
         for symbol in &vec {
             println!("{:#?}", symbol);
         }
+        */
 
         return vec;
     }

@@ -8,7 +8,10 @@ edition = "2021"
 [dependencies]
 clap = "3.1.6"
 git2 = "0.13"
-syn = { version = "1.0.91", features = ["full", "extra-traits", "parsing", "printing"]}
+pathdiff = "0.2.1"
+aho-corasick = "0.7.18"
+walkdir = "2.3.2"
+syn = { version = "1.0.91", features = ["full", "extra-traits", "visit", "parsing", "printing"]}
 proc-macro2 = { version = "1.0.37", features = ["span-locations"] }
 nom = "7"
 nom_locate = "4.0.0"

@@ -12,9 +12,11 @@ pub enum CommentType {
     // Inline todo
 }
 
+/// not used
 /// See https://docs.rs/nom_locate/latest/nom_locate/struct.LocatedSpan.html
 pub type Span<'a> = LocatedSpan<&'a str>;
 
+/// deprecated
 /// The symbol position for either a comment or a function. Is used as range.
 pub struct SymbolPosition<'a> {
     pub start:  Span<'a>,

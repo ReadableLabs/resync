@@ -3,16 +3,14 @@ use std::io::{BufRead, BufReader};
 use std::path::Path;
 use git2::{Repository, BlameOptions, Error, BranchType};
 
-pub fn get_line_info(path: &Path, file: &Path) -> Result<HashMap<u32, u64>, Error> { // TODO: make blame oldest and newest commit be equivalent to head id passed in
-    let mut lines: HashMap<u32, u64> = HashMap::new();
+pub fn get_line_info(path: &Path, file: &Path) -> Result<HashMap<usize, u64>, Error> { // TODO: make blame oldest and newest commit be equivalent to head id passed in
+    let mut lines: HashMap<usize, u64> = HashMap::new();
 
     let repo = Repository::open(path)?;
     let head = repo.head()?.peel_to_commit()?;
 
     let branch_name = format!("resync/{}", head.id());
     let spec = format!("{}:{}", branch_name, file.display());
-
-    // println!("{}", spec);
 
     let branch_oid = match repo.find_branch(&branch_name, BranchType::Local) {
         Ok(branch) => {
@@ -28,7 +26,6 @@ pub fn get_line_info(path: &Path, file: &Path) -> Result<HashMap<u32, u64>, Erro
 
     let mut blame_opts = BlameOptions::new();
     blame_opts.oldest_commit(head.id()).newest_commit(*branch_oid.as_ref().unwrap_or(&head.id()));
-    // println!("{}", branch_oid.as_ref().unwrap_or(&head.id()));
 
     let blame = repo.blame_file(file, Some(&mut blame_opts))?;
     let object = repo.revparse_single(&spec[..])?;

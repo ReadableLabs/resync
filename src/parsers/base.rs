@@ -6,7 +6,7 @@ use crate::parsers::{
 use std::vec::Vec;
 use std::process::exit;
 
-pub fn get_parser(language: &str) -> Box<dyn Parser> {
+pub fn get_parser(language: &str) -> Option<Box<dyn Parser>> {
     match language {
         /*
         "js" => Box::new(JsParser {}),
@@ -14,10 +14,10 @@ pub fn get_parser(language: &str) -> Box<dyn Parser> {
         "ts" => Box::new(TsParser {}),
         "tsx" => Box::new(TsParser {}),
         */
-        "rs" => Box::new(RsParser {}),
+        "rs" => Some(Box::new(RsParser {})),
         _ => {
             println!("Error: language not supported. Please open an issue at https://github.com/ReadableLabs/resync, or consider opening a pull request to add it");
-            exit(-1);
+            None
         }
     }
 }
