@@ -11,11 +11,15 @@ use syn::spanned::Spanned;
 pub struct RsParser;
 
 impl Parser for RsParser {
+    // essentially check the attr for comment, and then check the span of the item.
     #[proc_macro_derive(MyMacro)]
     fn parse(&self, file_input: &str) -> Vec<(SymbolSpan, SymbolSpan)> {
         let mut vec = Vec::new();
         println!("using rust parser");
         let ast = syn::parse_file(file_input).unwrap();
+
+        for attr in &ast.attrs {
+        }
 
         for item in &ast.items {
             match item {
