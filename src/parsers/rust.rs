@@ -1,14 +1,123 @@
 use std::str;
+use quote::quote;
 use std::vec::Vec;
 use crate::parsers::{
     types::{CommentType, SymbolPosition, Span, SymbolSpan, LineSpan},
     base::Parser};
-use syn::{Expr, Result};
+use syn::{Attribute, Expr, Result, File, ItemFn, Item, visit::{self, Visit}};
 use syn::spanned::Spanned;
 
 // use syn::__private::ToTokens;
 
 pub struct RsParser;
+
+struct FnVisitor {
+    symbols: Vec<(SymbolSpan, SymbolSpan)>,
+}
+
+/// Returns a shared reference to the attributes of the item.
+pub fn attrs(item: Item) -> &'static [Attribute] {
+    match item {
+        Item::Const(syn::ItemConst { attrs, .. })
+        | Item::Enum(syn::ItemEnum { attrs, .. })
+        | Item::ExternCrate(syn::ItemExternCrate { attrs, .. })
+        | Item::Fn(syn::ItemFn { attrs, .. })
+        | Item::ForeignMod(syn::ItemForeignMod { attrs, .. })
+        | Item::Impl(syn::ItemImpl { attrs, .. })
+        | Item::Macro(syn::ItemMacro { attrs, .. })
+        | Item::Macro2(syn::ItemMacro2 { attrs, .. })
+        | Item::Mod(syn::ItemMod { attrs, .. })
+        | Item::Static(syn::ItemStatic { attrs, .. })
+        | Item::Struct(syn::ItemStruct { attrs, .. })
+        | Item::Trait(syn::ItemTrait { attrs, .. })
+        | Item::TraitAlias(syn::ItemTraitAlias { attrs, .. })
+        | Item::Type(syn::ItemType { attrs, .. })
+        | Item::Union(syn::ItemUnion { attrs, .. }),
+        _ => &[]
+    }
+}
+
+/// Returns an exclusive reference to the attributes of the item.
+pub fn attrs_mut(item: Item) -> &'static mut [Attribute] {
+    match item {
+        Item::Const(syn::ItemConst { attrs, .. })
+        | Item::Enum(syn::ItemEnum { attrs, .. })
+        | Item::ExternCrate(syn::ItemExternCrate { attrs, .. })
+        | Item::Fn(syn::ItemFn { attrs, .. })
+        | Item::ForeignMod(syn::ItemForeignMod { attrs, .. })
+        | Item::Impl(syn::ItemImpl { attrs, .. })
+        | Item::Macro(syn::ItemMacro { attrs, .. })
+        | Item::Macro2(syn::ItemMacro2 { attrs, .. })
+        | Item::Mod(syn::ItemMod { attrs, .. })
+        | Item::Static(syn::ItemStatic { attrs, .. })
+        | Item::Struct(syn::ItemStruct { attrs, .. })
+        | Item::Trait(syn::ItemTrait { attrs, .. })
+        | Item::TraitAlias(syn::ItemTraitAlias { attrs, .. })
+        | Item::Type(syn::ItemType { attrs, .. })
+        | Item::Union(syn::ItemUnion { attrs, .. }),
+        _ => &mut [],
+    }
+}
+
+
+impl<'ast> Visit<'ast> for FnVisitor {
+    fn visit_item(&mut self, node: &'ast Item) {
+            // I know this is bad code, but I didn't feel like writing a macro
+            /*
+            Item::Const(item)
+                | Item::Enum(item)
+                | Item::ExternCrate(item)
+                | Item::Fn(item)
+                | Item::ForeignMod(item)
+                | Item::Impl(item)
+                | Item::Macro(item)
+                | Item::Macro2(item)
+                | Item::Mod(item)
+                | Item::Static(item)
+                | Item::Struct(item)
+                | Item::Trait(item)
+                | Item::TraitAlias(item)
+                | Item::Type(item)
+                | Item::Union(item)
+                | Item::Use(item)
+                | Item::Verbatim(item)
+                => {
+                    println!("ok")
+                }
+                */
+        println!("{:#?}", node);
+        // let mut tokens = quote!(#node);
+        // println!("{:#?}", tokens);
+        return visit::visit_item(self, node);
+        /*
+        let comment = match get_comment_range(&node.attrs) {
+            Some(comment) => comment,
+            _ => {
+                return visit::visit_item(self, node);
+            },
+        };
+
+        let fun = node.block.span();
+
+
+        let function = SymbolSpan {
+            start: LineSpan {
+                line: fun.start().line,
+                character: fun.start().column
+            },
+            end: {
+                LineSpan {
+                    line: fun.end().line,
+                    character: fun.end().column
+                }
+            }
+        };
+
+        self.symbols.push((comment, function));
+        return visit::visit_item_fn(self, node);
+        */
+    }
+}
 
 impl Parser for RsParser {
     // essentially check the attr for comment, and then check the span of the item.
@@ -17,6 +126,10 @@ impl Parser for RsParser {
         let mut vec = Vec::new();
         println!("using rust parser");
         let ast = syn::parse_file(file_input).unwrap();
+        let mut visitor = FnVisitor { symbols: Vec::new() };
+        visitor.visit_file(&ast);
+
+        println!("{}", visitor.symbols.len());
 
         for attr in &ast.attrs {
         }
@@ -57,7 +170,7 @@ impl Parser for RsParser {
 fn parseImpl(expr: &syn::ItemImpl) -> Vec<(SymbolSpan, SymbolSpan)> {
     let mut vec: Vec<(SymbolSpan, SymbolSpan)> = Vec::new();
     if expr.attrs.len() > 0 {
-        match getCommentRange(&expr.attrs) {
+        match get_comment_range(&expr.attrs) {
             Some(comment) => {
 
                 let fun = expr.span();
@@ -85,7 +198,7 @@ fn parseImpl(expr: &syn::ItemImpl) -> Vec<(SymbolSpan, SymbolSpan)> {
         match item {
             // now it's basically a function
             syn::ImplItem::Method(method) => {
-                let comment = match getCommentRange(&method.attrs) {
+                let comment = match get_comment_range(&method.attrs) {
                     Some(comment) => comment,
                     _ => {
                         continue;
@@ -114,7 +227,7 @@ fn parseImpl(expr: &syn::ItemImpl) -> Vec<(SymbolSpan, SymbolSpan)> {
     return vec;
 }
 
-fn getCommentRange(attrs: &Vec<syn::Attribute>) -> Option<SymbolSpan> {
+fn get_comment_range(attrs: &Vec<syn::Attribute>) -> Option<SymbolSpan> {
     if attrs.len() <= 0 {
         return None;
     }
@@ -161,7 +274,7 @@ fn parseFun(expr: &syn::ItemFn) -> Option<(SymbolSpan, SymbolSpan)> {
         return None;
     }
 
-    let comment = match getCommentRange(&expr.attrs) {
+    let comment = match get_comment_range(&expr.attrs) {
         Some(comment) => comment,
         _ => {
             return None;
