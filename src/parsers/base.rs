@@ -1,7 +1,7 @@
 use crate::parsers::{
     //javascript::JsParser,
     //typescript::TsParser,
-    rust::RsParser,
+    rust::parser::RsParser,
     types::{Span, SymbolPosition, SymbolSpan}};
 use std::vec::Vec;
 use std::process::exit;
@@ -16,7 +16,7 @@ pub fn get_parser(language: &str) -> Option<Box<dyn Parser>> {
         */
         "rs" => Some(Box::new(RsParser {})),
         _ => {
-            println!("Error: language not supported. Please open an issue at https://github.com/ReadableLabs/resync, or consider opening a pull request to add it");
+            println!("Error: language '{}' not supported. Please open an issue at https://github.com/ReadableLabs/resync, or consider opening a pull request to add it", language);
             None
         }
     }
