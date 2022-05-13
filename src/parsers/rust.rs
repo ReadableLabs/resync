@@ -1,5 +1,4 @@
 use std::str;
-use quote::quote;
 use std::vec::Vec;
 use crate::parsers::{
     types::{CommentType, SymbolPosition, Span, SymbolSpan, LineSpan},
@@ -16,7 +15,7 @@ struct FnVisitor {
 }
 
 /// Returns a shared reference to the attributes of the item.
-pub fn attrs(item: Item) -> &'static [Attribute] {
+pub fn get_attrs(item: &Item) -> Option<&Vec<Attribute>> {
     match item {
         Item::Const(syn::ItemConst { attrs, .. })
         | Item::Enum(syn::ItemEnum { attrs, .. })
@@ -32,90 +31,57 @@ pub fn attrs(item: Item) -> &'static [Attribute] {
         | Item::Trait(syn::ItemTrait { attrs, .. })
         | Item::TraitAlias(syn::ItemTraitAlias { attrs, .. })
         | Item::Type(syn::ItemType { attrs, .. })
-        | Item::Union(syn::ItemUnion { attrs, .. }),
-        _ => &[]
+        | Item::Union(syn::ItemUnion { attrs, .. }) => {
+            println!("ok");
+            Some(attrs)
+        },
+        _ => None
     }
 }
-
-/// Returns an exclusive reference to the attributes of the item.
-pub fn attrs_mut(item: Item) -> &'static mut [Attribute] {
-    match item {
-        Item::Const(syn::ItemConst { attrs, .. })
-        | Item::Enum(syn::ItemEnum { attrs, .. })
-        | Item::ExternCrate(syn::ItemExternCrate { attrs, .. })
-        | Item::Fn(syn::ItemFn { attrs, .. })
-        | Item::ForeignMod(syn::ItemForeignMod { attrs, .. })
-        | Item::Impl(syn::ItemImpl { attrs, .. })
-        | Item::Macro(syn::ItemMacro { attrs, .. })
-        | Item::Macro2(syn::ItemMacro2 { attrs, .. })
-        | Item::Mod(syn::ItemMod { attrs, .. })
-        | Item::Static(syn::ItemStatic { attrs, .. })
-        | Item::Struct(syn::ItemStruct { attrs, .. })
-        | Item::Trait(syn::ItemTrait { attrs, .. })
-        | Item::TraitAlias(syn::ItemTraitAlias { attrs, .. })
-        | Item::Type(syn::ItemType { attrs, .. })
-        | Item::Union(syn::ItemUnion { attrs, .. }),
-        _ => &mut [],
-    }
-}
-
 
 impl<'ast> Visit<'ast> for FnVisitor {
     fn visit_item(&mut self, node: &'ast Item) {
-            // I know this is bad code, but I didn't feel like writing a macro
-            /*
-            Item::Const(item)
-                | Item::Enum(item)
-                | Item::ExternCrate(item)
-                | Item::Fn(item)
-                | Item::ForeignMod(item)
-                | Item::Impl(item)
-                | Item::Macro(item)
-                | Item::Macro2(item)
-                | Item::Mod(item)
-                | Item::Static(item)
-                | Item::Struct(item)
-                | Item::Trait(item)
-                | Item::TraitAlias(item)
-                | Item::Type(item)
-                | Item::Union(item)
-                | Item::Use(item)
-                | Item::Verbatim(item)
-                => {
-                    println!("ok")
-                }
-                */
-        println!("{:#?}", node);
-        // let mut tokens = quote!(#node);
-        // println!("{:#?}", tokens);
-        return visit::visit_item(self, node);
-        /*
-        let comment = match get_comment_range(&node.attrs) {
-            Some(comment) => comment,
+        match node {
+            Item::Fn(item) => {
+
+                let span = item.span();
+                let attrs = &item.attrs;
+
+                // return item, get attr, get span from item, return both
+                println!("GOT ITEM SPAN");
+                println!("GOT ITEM SPAN");
+                println!("GOT ITEM SPAN");
+                println!("GOT ITEM SPAN");
+                println!("GOT ITEM SPAN");
+                println!("GOT ITEM SPAN");
+                println!("GOT ITEM SPAN");
+                println!("GOT ITEM SPAN");
+                println!("GOT ITEM SPAN");
+                println!("GOT ITEM SPAN");
+            },
+            _ => {
+            }
+        }
+        let attrs = match get_attrs(node) {
+            Some(attrs) => attrs,
             _ => {
                 return visit::visit_item(self, node);
-            },
-        };
-
-        let fun = node.block.span();
-
-
-        let function = SymbolSpan {
-            start: LineSpan {
-                line: fun.start().line,
-                character: fun.start().column
-            },
-            end: {
-                LineSpan {
-                    line: fun.end().line,
-                    character: fun.end().column
-                }
             }
         };
 
-        self.symbols.push((comment, function));
-        return visit::visit_item_fn(self, node);
-        */
+        let comment = match get_comment_range(attrs) {
+            Some(comment) => comment,
+            _ => {
+                return visit::visit_item(self, node);
+            }
+        };
+
+        // and then subtract the span
+        // println!("{:#?}", item.span());
+        // println!("{:#?}", attrs);
+        // let mut tokens = quote!(#node);
+        // println!("{:#?}", tokens);
+        return visit::visit_item(self, node);
     }
 }
 
