@@ -1,15 +1,18 @@
-### Resync
+## Resync
 
-A multi language comment checker.
+![1]()
+
+**A multi language comment checker.**
 
 Resync uses the git history of your repo to detect out of sync comments. It's a CLI tool which works in multiple languages, and supports docstrings and inline comments.
 
 The goal of resync is to be a fast, small, and simple comment checker. It uses other libraries for parsing, but the release build should try to be under 10mb.
 
-Resync tells you if specific params/returns are out of sync, or if comments are stale.
+There's also a vscode extension which supports resync, showing you all out of sync comments while you're coding.
+![2]()
 
-#### Supported Languages
-- [ ] Rust
+### Supported Languages
+- [x] Rust
 - [ ] Javscript
 - [ ] Typescript
 - [ ] C
@@ -20,9 +23,10 @@ Resync tells you if specific params/returns are out of sync, or if comments are 
 - [ ] Kotlin
 - [ ] Java
 
-Resync uses optional dependencies to make sure the executable stays small.
+### Docs
+TODO
 
-#### Project Structure
+### Project Structure
 ```
 ├── docs
 ├── src
@@ -32,4 +36,5 @@ Resync uses optional dependencies to make sure the executable stays small.
 [parsers.md](./doc/parsers.md)
 
 ### TODO
+- use optional dependencies if you only want to compile for a few languages
 - Make work on base branch without sync (replace all 0's with current unix time) - sync will be used for Readable

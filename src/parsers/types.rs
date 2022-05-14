@@ -2,9 +2,6 @@ use nom_locate::{LocatedSpan};
 
 
 /// The comment type of a function
-/// Docstring - the comment is over a function
-/// Free - the comment is over a random peice of code
-/// Inline (TODO) - inline comment
 #[derive(Debug)]
 pub enum CommentType {
     Docstring,
