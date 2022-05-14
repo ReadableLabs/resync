@@ -19,39 +19,33 @@ fn main() {
         .arg(Arg::new("dir")
              .short('d')
              .long("dir")
-             .help("Sets the directory for resync to work in")
+             .help("Sets working dir")
              .takes_value(true))
         .arg(Arg::new("sync")
              .short('s')
              .long("sync")
-             .help("Syncs the directory"))
-        .arg(Arg::new("check")
+             .help("Updates resync git branch with current working branch information (used with extension)"))
+        .arg(Arg::new("check-dir")
              .short('c')
-             .long("check")
-             .help("Checks a specific file for out of sync comments")
+             .long("check-dir")
+             .help("Checks a specific directory recursively for out of sync comments")
              .takes_value(false)
              )
-        .arg(Arg::new("info")
+        .arg(Arg::new("check-file")
              .short('i')
-             .long("info")
-             .help("Outputs time each line has changed"))
+             .long("check-file")
+             .help("Checks a specific file for out of sync comments"))
         .arg(Arg::new("porcelain")
              .short('p')
              .long("porcelain")
-             .help("Format designed for machine consumption"))
-        .arg(Arg::new("m")
+             .help("Output out of sync comments in format designed for machine consumption"))
+        .arg(Arg::new("no-resync-branch")
              .short('m')
-             .long("use-master-branch")
-             .help("Whether or not to use master branch to get blame data"))
+             .long("no-resync-branch")
+             .help("Don't use or create a resync branch (out of sync comments won't be updated until you commit to your own branch)"))
         .get_matches();
 
-    // replace it all with a character very specific, so the line ranges don't get messed up, and
-    // then repalce all the specific chars with nothing at once
-
     let working_dir = Path::new(matches.value_of("dir").unwrap_or("/home/nevin/Desktop/testinit"));
-    // get current working dir
-    println!("{}", working_dir.display());
-    // let all_funs = get_all_functions(Span::new("/*asdgasdgasdg\n*/\npublic function myFun2() {\nsome code\n}\n /*jadskg*/ my code part three ajkdshadskjgadshgjahgdsj\nasdgadshugadsg\n /*sidg*/\npublic function myFun3() {\nsome more code\n}\n /*hoiasdhgoisag*/\npublic function myFun4() {\nasdgasagsdgdas\n}"));
 
     if matches.is_present("sync") {
         match sync::sync(working_dir) {
@@ -66,7 +60,7 @@ fn main() {
         println!("Value of config {}", "hi");
     }
 
-    if matches.is_present("check") {
+    if matches.is_present("check-dir") {
         let patterns = [".git", ".swp", "node_modules"];
 
         let ac = AhoCorasick::new(&patterns);
@@ -76,14 +70,14 @@ fn main() {
             if ac.is_match(f) {
                 continue;
             }
+
+            // check if file is directory
             match file.path().extension() {
                 Some(ext) => {},
                 None => {
                     continue;
                 }
             }
-
-            println!("{}", f);
 
             // println!("{}", file.file_name().to_os_string().into_string().unwrap());
             // println!("{}", file.path().to_str().unwrap());
@@ -97,9 +91,9 @@ fn main() {
 
             let blame_lines = info::get_line_info(working_dir, &relative_path).expect("Error blaming file");
 
-            let ext = file.path().extension().and_then(OsStr::to_str).unwrap();
+            // let ext = file.path().extension().and_then(OsStr::to_str).unwrap();
 
-            let parser = match get_parser(ext) {
+            let parser = match get_parser(file.path(), &patterns) {
                 Some(parser) => parser,
                 _ => {
                     continue;
@@ -146,7 +140,7 @@ fn main() {
         }
     }
 
-    if matches.is_present("info") {
+    if matches.is_present("check-file") {
         match info::get_line_info(working_dir, Path::new("myFile.txt")) {
             Ok(lines) => {
                 println!("succesfully got blame");

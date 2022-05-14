@@ -5,9 +5,27 @@ use crate::parsers::{
     types::{Span, SymbolPosition, SymbolSpan}};
 use std::vec::Vec;
 use std::process::exit;
+use aho_corasick::AhoCorasick;
+use std::path::Path;
 
-pub fn get_parser(language: &str) -> Option<Box<dyn Parser>> {
-    match language {
+pub fn get_parser(file: &Path, ignore_patterns: &[&str]) -> Option<Box<dyn Parser>> {
+    let ac = AhoCorasick::new(ignore_patterns);
+    let f = file.to_str().unwrap();
+
+    if ac.is_match(f) {
+        return None;
+    }
+
+    let extension = match file.extension() {
+        Some(ext) => {
+            ext.to_str().unwrap()
+        },
+        _ => {
+            return None;
+        }
+    };
+
+    match extension {
         /*
         "js" => Box::new(JsParser {}),
         "jsx" => Box::new(JsParser {}),
@@ -16,7 +34,7 @@ pub fn get_parser(language: &str) -> Option<Box<dyn Parser>> {
         */
         "rs" => Some(Box::new(RsParser {})),
         _ => {
-            println!("Error: language '{}' not supported. Please open an issue at https://github.com/ReadableLabs/resync, or consider opening a pull request to add it", language);
+            println!("Language '{}' for {} not supported, continuing.", extension, f);
             None
         }
     }

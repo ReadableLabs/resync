@@ -309,6 +309,7 @@ dependencies = [
  "nom_locate",
  "pathdiff",
  "proc-macro2",
+ "quote",
  "syn",
  "walkdir",
 ]

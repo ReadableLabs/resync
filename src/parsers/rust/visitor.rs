@@ -9,9 +9,8 @@ pub struct RsVisitor {
     pub symbols: Vec<(SymbolSpan, SymbolSpan)>,
 }
 
-impl<'ast> Visit<'ast> for &mut RsVisitor {
+impl<'ast> Visit<'ast> for RsVisitor {
     fn visit_item(&mut self, node: &'ast Item) {
-        println!("{:#?}", node);
 
         let fun = &node.span();
         // println!("{:#?}", span);
@@ -40,9 +39,6 @@ impl<'ast> Visit<'ast> for &mut RsVisitor {
                 character: fun.end().column
             }
         };
-
-        println!("{:#?}", comment);
-        println!("{:#?}", function);
 
         self.symbols.push((comment, function));
 
@@ -77,14 +73,7 @@ impl<'ast> Visit<'ast> for &mut RsVisitor {
             }
         };
 
-        println!("{:#?}", comment);
-        println!("{:#?}", function);
-
         self.symbols.push((comment, function));
-    }
-
-    fn visit_file(&mut self, file: &'ast File) {
-        visit::visit_file(self, file);
     }
 }
 
