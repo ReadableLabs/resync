@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
-use git2::{Repository, BlameOptions, Error, BranchType};
+use git2::{Repository, BlameOptions, Error, BranchType, Oid};
 
 pub fn get_line_info(path: &Path, file: &Path) -> Result<HashMap<usize, u64>, Error> { // TODO: make blame oldest and newest commit be equivalent to head id passed in
     let mut lines: HashMap<usize, u64> = HashMap::new();
@@ -42,4 +42,25 @@ pub fn get_line_info(path: &Path, file: &Path) -> Result<HashMap<usize, u64>, Er
 
 
     return Ok(lines);
+}
+
+/// pass in repo for later
+pub fn get_commit_diff(repo: &Repository, new: &Oid, old: &Oid) -> Result<u32, Error> {
+    let head = repo.head()?.peel_to_commit()?;
+
+    let branch_name = format!("resync/{}", head.id());
+
+    let mut revwalk = repo.revwalk()?;
+
+    revwalk.set_sorting(git2::Sort::TIME)?;
+
+    let revspec = repo.revparse(new)?;
+    let id = repo.revparse_single(revspec)?.id();
+    revwalk.push(id)?;
+
+    for id in revwalk {
+        let id = id?;
+        println!("{}", id);
+    }
+
 }
