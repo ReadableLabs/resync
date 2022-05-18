@@ -1,10 +1,7 @@
 use crate::parsers::{
-    //javascript::JsParser,
-    //typescript::TsParser,
     rust::parser::RsParser,
-    types::{Span, SymbolPosition, SymbolSpan}};
+    types::SymbolSpan};
 use std::vec::Vec;
-use std::process::exit;
 use aho_corasick::AhoCorasick;
 use std::path::Path;
 

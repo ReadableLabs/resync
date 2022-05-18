@@ -1,11 +1,20 @@
 ## Parsers
 
+Table of Contents
+
+1. About parsers
+2. How the current rust parser works
+3. Writing a new parser
+4. FAQ
+
 Comment
+
 - Text
 - Args\[\] (Will be none)
 - Return
 
 Code
+
 - Type (Function/Free)
 - Params\[\] (Will be None if function type is free)
 - Return\[\] (Will be none)
@@ -14,12 +23,14 @@ Code
 Most parsers start by getting docstring comments, the info of them, as well as the correct function information.
 
 Comment
+
 - Args
 - Return
 - Notes
 - Span
 
 Function
+
 - Args
 - Return
 - Notes
@@ -28,9 +39,11 @@ Function
 Next, inline comments are gotten.
 
 Comment
+
 - Span
 
 Code
+
 - Span (5 lines down)
 
 Note if the types will be one or diff

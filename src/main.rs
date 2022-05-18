@@ -117,9 +117,10 @@ fn main() {
 
                 if function_info.time > comment_info.time {
                     let commit_diff = info::get_commit_diff(&repo, &function_info.commit, &comment_info.commit).expect("Failed to get commit diff");
-                    println!("comment id {}", comment_info.commit);
-                    println!("function id {}", function_info.commit);
-                    println!("commit diff {}", commit_diff);
+                    println!("comment diff - {}", commit_diff);
+                    // if commit_diff < 20 {
+                    //     continue;
+                    // }
                     let line = function.start.line - 1;
                     let character = function.start.character;
                     println!("{}:{}:{}", file.path().display(), line, character);
