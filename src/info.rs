@@ -45,7 +45,7 @@ pub fn get_line_info(path: &Path, file: &Path) -> Result<HashMap<usize, u64>, Er
 }
 
 /// pass in repo for later
-pub fn get_commit_diff(repo: &Repository, new: &Oid, old: &Oid) -> Result<u32, Error> {
+pub fn get_commit_diff(repo: &Repository, new: &str, old: &str) -> Result<u32, Error> {
     let head = repo.head()?.peel_to_commit()?;
 
     let branch_name = format!("resync/{}", head.id());
@@ -55,7 +55,7 @@ pub fn get_commit_diff(repo: &Repository, new: &Oid, old: &Oid) -> Result<u32, E
     revwalk.set_sorting(git2::Sort::TIME)?;
 
     let revspec = repo.revparse(new)?;
-    let id = repo.revparse_single(revspec)?.id();
+    let id = repo.revparse_single(old)?.id();
     revwalk.push(id)?;
 
     for id in revwalk {
