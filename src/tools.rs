@@ -1,19 +1,25 @@
 use std::collections::HashMap;
 use std::str;
-use crate::parsers::types::{SymbolPosition, SymbolSpan, LineSpan};
+use crate::info::LineInfo;
+use crate::parsers::types::{SymbolSpan};
 
-pub fn get_max_time(blame_info: &HashMap<usize, u64>, symbol: &SymbolSpan) -> u64 {
+pub fn get_latest_line(blame_info: &HashMap<usize, LineInfo>, symbol: &SymbolSpan) -> usize {
     let start = symbol.start.line - 1; // because symbol is 1 indexed
     let end = symbol.end.line - 1;
 
+    let mut latest = 0;
     let mut time = 0;
+    // let mut latest = blame_info.get(&start).expect("Failed to get initial line");
     for line in start..end {
-        let line_info = *blame_info.get(&line).expect("Failed to get line at blame");
-        if line_info > time {
-            time = line_info;
+        let line_info = blame_info.get(&line).expect("Failed to get line at blame");
+        if line_info.time > time {
+            latest = line;
+            time = line_info.time;
         }
     }
-    return time;
+
+    return latest;
+    // return latest;
 }
 
 pub fn print_comment(lines: &Vec<&str>, comment: &SymbolSpan) {

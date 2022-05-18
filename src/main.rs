@@ -1,15 +1,16 @@
+mod info;
+mod parsers; // base::get_parser
+mod tools;
+mod sync;
+
 use std::path::Path;
 use aho_corasick::AhoCorasick;
 use std::fs::{read_to_string};
 use clap::{Arg, Command};
 use walkdir::WalkDir;
-use resync::sync;
-use resync::info;
+use tools::{get_latest_line, print_comment, print_function};
+use parsers::base::get_parser;
 use pathdiff::diff_paths;
-use resync::parsers::base::get_parser;
-use resync::parsers::types::Span;
-use resync::tools::{get_max_time, print_comment, print_function};
-use std::ffi::OsStr;
 
 fn main() {
     let matches = Command::new("Resync")
@@ -73,7 +74,7 @@ fn main() {
 
             // check if file is directory
             match file.path().extension() {
-                Some(ext) => {},
+                Some(_) => {},
                 None => {
                     continue;
                 }
@@ -90,6 +91,8 @@ fn main() {
             println!("{}", relative_path.display());
 
             let blame_lines = info::get_line_info(working_dir, &relative_path).expect("Error blaming file");
+            // let commit_diff = info::get_commit_diff(working_dir, "56454c97", "affe6a76").unwrap();
+            // println!("changed commits, {}", commit_diff);
 
             // let ext = file.path().extension().and_then(OsStr::to_str).unwrap();
 
@@ -101,12 +104,19 @@ fn main() {
             };
             let all_funs = parser.parse(&read);
 
+            // make a module which checks all of these, checkall, which you can implement
             for (comment, function) in all_funs {
-                let comment_time = get_max_time(&blame_lines, &comment);
-                
-                let function_time = get_max_time(&blame_lines, &function);
+                let comment_idx = get_latest_line(&blame_lines, &comment);
+                let fun_idx = get_latest_line(&blame_lines, &function);
 
-                if function_time > comment_time {
+                let comment_info = blame_lines.get(&comment_idx).expect("Failed to get comment from blame lines");
+                let function_info = blame_lines.get(&fun_idx).expect("Failed to get function from blame lines");
+
+                if function_info.time > comment_info.time {
+                    let commit_diff = info::get_commit_diff(working_dir, &function_info.commit, &comment_info.commit).expect("Failed to get commit diff");
+                    println!("comment id {}", comment_info.commit);
+                    println!("function id {}", function_info.commit);
+                    println!("commit diff {}", commit_diff);
                     let line = function.start.line - 1;
                     let character = function.start.character;
                     println!("{}:{}:{}", file.path().display(), line, character);
@@ -142,11 +152,11 @@ fn main() {
 
     if matches.is_present("check-file") {
         match info::get_line_info(working_dir, Path::new("myFile.txt")) {
-            Ok(lines) => {
+            Ok(_) => {
                 println!("succesfully got blame");
-                for (key, value) in lines {
-                    println!("{}:{}", key, value);
-                }
+                // for (key, value) in lines {
+                    // println!("{}:{}", key, value);
+                // }
             }
             Err(e) => {
                 println!("Error blaming {}", e);

@@ -1,10 +1,16 @@
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
+use std::str;
 use git2::{Repository, BlameOptions, Error, BranchType, Oid};
 
-pub fn get_line_info(path: &Path, file: &Path) -> Result<HashMap<usize, u64>, Error> { // TODO: make blame oldest and newest commit be equivalent to head id passed in
-    let mut lines: HashMap<usize, u64> = HashMap::new();
+pub struct LineInfo {
+    pub time: u64,
+    pub commit: String,
+}
+
+pub fn get_line_info(path: &Path, file: &Path) -> Result<HashMap<usize, LineInfo>, Error> { // TODO: make blame oldest and newest commit be equivalent to head id passed in
+    let mut lines: HashMap<usize, LineInfo> = HashMap::new();
 
     let repo = Repository::open(path)?;
     let head = repo.head()?.peel_to_commit()?;
@@ -34,8 +40,17 @@ pub fn get_line_info(path: &Path, file: &Path) -> Result<HashMap<usize, u64>, Er
     let reader = BufReader::new(blob.content());
     for (i, _) in reader.lines().enumerate() {
         if let Some(hunk) = blame.get_line(i + 1) {
+            let commit_id = format!("{}", hunk.final_commit_id());
+            // println!("{} - {}", i + 1, commit_id);
             let time = hunk.final_signature().when().seconds();
-            lines.insert(i.try_into().unwrap(), time.try_into().unwrap());
+            lines.insert(
+                i.try_into().unwrap(),
+                LineInfo {
+                    time: time.try_into().unwrap(),
+                    commit: commit_id
+                }
+            );
+            // lines.insert(i.try_into().unwrap(), time.try_into().unwrap());
             // could use softmax
         }
     }
@@ -45,7 +60,8 @@ pub fn get_line_info(path: &Path, file: &Path) -> Result<HashMap<usize, u64>, Er
 }
 
 /// pass in repo for later
-pub fn get_commit_diff(repo: &Repository, new: &str, old: &str) -> Result<u32, Error> {
+pub fn get_commit_diff(path: &Path, new: &str, old: &str) -> Result<usize, Error> {
+    let repo = Repository::open(path)?;
     let head = repo.head()?.peel_to_commit()?;
 
     let branch_name = format!("resync/{}", head.id());
@@ -55,12 +71,18 @@ pub fn get_commit_diff(repo: &Repository, new: &str, old: &str) -> Result<u32, E
     revwalk.set_sorting(git2::Sort::TIME)?;
 
     let revspec = repo.revparse(new)?;
-    let id = repo.revparse_single(old)?.id();
-    revwalk.push(id)?;
+    revwalk.hide(Oid::from_str(old).unwrap())?;
+    revwalk.push(Oid::from_str(new).unwrap())?;
+    // let id = repo.revparse_single(old)?.id();
+    // revwalk.push(id)?;
 
-    for id in revwalk {
-        let id = id?;
-        println!("{}", id);
-    }
+    let count = revwalk.count();
+
+    // for id in revwalk {
+    //     let id = id?;
+    //     println!("{}", id);
+    // }
+
+    Ok(count)
 
 }
