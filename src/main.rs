@@ -10,6 +10,7 @@ use clap::{Arg, Command};
 use walkdir::WalkDir;
 use tools::{get_latest_line, print_comment, print_function};
 use parsers::base::get_parser;
+use git2::Repository;
 use pathdiff::diff_paths;
 
 fn main() {
@@ -90,7 +91,9 @@ fn main() {
             let relative_path = diff_paths(file.path(), working_dir).unwrap();
             println!("{}", relative_path.display());
 
-            let blame_lines = info::get_line_info(working_dir, &relative_path).expect("Error blaming file");
+            let repo = Repository::open(working_dir).expect("Failed to open repo");
+
+            let blame_lines = info::get_line_info(&repo, &relative_path).expect("Error blaming file");
             // let commit_diff = info::get_commit_diff(working_dir, "56454c97", "affe6a76").unwrap();
             // println!("changed commits, {}", commit_diff);
 
@@ -113,7 +116,7 @@ fn main() {
                 let function_info = blame_lines.get(&fun_idx).expect("Failed to get function from blame lines");
 
                 if function_info.time > comment_info.time {
-                    let commit_diff = info::get_commit_diff(working_dir, &function_info.commit, &comment_info.commit).expect("Failed to get commit diff");
+                    let commit_diff = info::get_commit_diff(&repo, &function_info.commit, &comment_info.commit).expect("Failed to get commit diff");
                     println!("comment id {}", comment_info.commit);
                     println!("function id {}", function_info.commit);
                     println!("commit diff {}", commit_diff);
@@ -150,19 +153,19 @@ fn main() {
         }
     }
 
-    if matches.is_present("check-file") {
-        match info::get_line_info(working_dir, Path::new("myFile.txt")) {
-            Ok(_) => {
+    // if matches.is_present("check-file") {
+        // match info::get_line_info(working_dir, Path::new("myFile.txt")) {
+        //     Ok(_) => {
                 println!("succesfully got blame");
                 // for (key, value) in lines {
                     // println!("{}:{}", key, value);
                 // }
-            }
-            Err(e) => {
-                println!("Error blaming {}", e);
-            }
-        }
-    }
+        //     }
+        //     Err(e) => {
+        //         println!("Error blaming {}", e);
+        //     }
+        // }
+    // }
 
     println!("Hello, world!");
 }

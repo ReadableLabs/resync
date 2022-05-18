@@ -9,10 +9,10 @@ pub struct LineInfo {
     pub commit: String,
 }
 
-pub fn get_line_info(path: &Path, file: &Path) -> Result<HashMap<usize, LineInfo>, Error> { // TODO: make blame oldest and newest commit be equivalent to head id passed in
+pub fn get_line_info(repo: &Repository, file: &Path) -> Result<HashMap<usize, LineInfo>, Error> { // TODO: make blame oldest and newest commit be equivalent to head id passed in
     let mut lines: HashMap<usize, LineInfo> = HashMap::new();
 
-    let repo = Repository::open(path)?;
+    // let repo = Repository::open(path)?;
     let head = repo.head()?.peel_to_commit()?;
 
     let branch_name = format!("resync/{}", head.id());
@@ -60,17 +60,13 @@ pub fn get_line_info(path: &Path, file: &Path) -> Result<HashMap<usize, LineInfo
 }
 
 /// pass in repo for later
-pub fn get_commit_diff(path: &Path, new: &str, old: &str) -> Result<usize, Error> {
-    let repo = Repository::open(path)?;
-    let head = repo.head()?.peel_to_commit()?;
-
-    let branch_name = format!("resync/{}", head.id());
+pub fn get_commit_diff(repo: &Repository, new: &str, old: &str) -> Result<usize, Error> {
+    // let repo = Repository::open(path)?;
 
     let mut revwalk = repo.revwalk()?;
 
     revwalk.set_sorting(git2::Sort::TIME)?;
 
-    let revspec = repo.revparse(new)?;
     revwalk.hide(Oid::from_str(old).unwrap())?;
     revwalk.push(Oid::from_str(new).unwrap())?;
     // let id = repo.revparse_single(old)?.id();
