@@ -1,7 +1,7 @@
 use crate::parsers::{
     types::{SymbolSpan, LineSpan},
     rust::tools::{get_attrs_item, get_attrs_impl_item, get_comment_range}};
-use syn::{Item, ImplItem, File, visit::{self, Visit}};
+use syn::{Item, ImplItem, visit::{self, Visit}};
 use syn::spanned::Spanned;
 
 /// keeps track of all the code + comment pairs

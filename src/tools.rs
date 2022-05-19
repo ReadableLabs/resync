@@ -1,7 +1,11 @@
 use std::collections::HashMap;
 use std::str;
+use std::path::Path;
 use crate::info::LineInfo;
 use crate::parsers::types::{SymbolSpan};
+use bat::{
+    line_range::{LineRange, LineRanges},
+    PrettyPrinter};
 
 pub fn get_latest_line(blame_info: &HashMap<usize, LineInfo>, symbol: &SymbolSpan) -> usize {
     let start = symbol.start.line - 1; // because symbol is 1 indexed
@@ -22,23 +26,37 @@ pub fn get_latest_line(blame_info: &HashMap<usize, LineInfo>, symbol: &SymbolSpa
     // return latest;
 }
 
-pub fn print_comment(lines: &Vec<&str>, comment: &SymbolSpan) {
-    let comment_start = comment.start.line - 1;
-    let comment_end = comment.end.line;
-
-    for line in comment_start..comment_end {
-        println!("{}: |{}", line, lines[usize::try_from(line).unwrap()]);
-    }
-}
-
-pub fn print_function(lines: &Vec<&str>, function: &SymbolSpan) {
-    let function_start = function.start.line - 1;
+pub fn print_symbol(lines: &Vec<&str>, function: &SymbolSpan, comment: &SymbolSpan, file: &Path, language: &str) {
+    let function_start = function.start.line;
     let function_end = function.end.line;
 
+    let comment_start = comment.start.line;
+    let comment_end = comment.end.line;
+
+    let ranges = vec!(
+    LineRange::new(
+        function_start,
+        function_end
+    ),
+    LineRange::new(
+        comment_start,
+        comment_end
+    ));
+
+    let function_range = vec!(LineRange::new(function_start, function_end));
+
+    PrettyPrinter::new()
+        .input_file(file)
+        .language(language)
+        .line_numbers(true)
+        .line_ranges(LineRanges::from(ranges))
+        .print()
+        .unwrap();
+
     // do +3 and show line numbers
-    for line in function_start..function_end {
-        println!("{}: |{}", line, lines[usize::try_from(line).unwrap()]);
-    }
+    // for line in function_start..function_end {
+    //     println!("{}: |{}", line, lines[usize::try_from(line).unwrap()]);
+    // }
 
 }
 

@@ -8,10 +8,11 @@ use aho_corasick::AhoCorasick;
 use std::fs::{read_to_string};
 use clap::{Arg, Command};
 use walkdir::WalkDir;
-use tools::{get_latest_line, print_comment, print_function};
+use tools::{get_latest_line, print_symbol};
 use parsers::base::get_parser;
 use git2::Repository;
 use pathdiff::diff_paths;
+use std::ffi::OsStr;
 
 fn main() {
     let matches = Command::new("Resync")
@@ -74,12 +75,12 @@ fn main() {
             }
 
             // check if file is directory
-            match file.path().extension() {
-                Some(_) => {},
+            let ext = match file.path().extension() {
+                Some(ext) => ext.to_str().unwrap(),
                 None => {
                     continue;
                 }
-            }
+            };
 
             // println!("{}", file.file_name().to_os_string().into_string().unwrap());
             // println!("{}", file.path().to_str().unwrap());
@@ -123,11 +124,12 @@ fn main() {
                     // }
                     let line = function.start.line - 1;
                     let character = function.start.character;
+                    let file_path = file.path();
                     println!("{}:{}:{}", file.path().display(), line, character);
-                    print_comment(&lines, &comment);
-                    println!("");
-                    println!("Is out of sync with...");
-                    print_function(&lines, &function);
+                    // print_symbol(&lines, &comment, &file_path, ext);
+                    // println!("");
+                    // println!("Is out of sync with...");
+                    print_symbol(&lines, &function, &comment, &file_path, ext);
                     println!("");
                 }
             }
