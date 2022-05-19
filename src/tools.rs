@@ -38,7 +38,7 @@ pub fn check_control(blame_info: &HashMap<usize, LineInfo>, symbol: &SymbolSpan)
 
     for (time, amount) in &map {
         let control = amount / total_lines;
-        if control > 0.30 {
+        if control > 0.40 {
             return true;
         }
     }
