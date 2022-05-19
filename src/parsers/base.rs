@@ -38,5 +38,5 @@ pub fn get_parser(file: &Path, ignore_patterns: &[&str]) -> Option<Box<dyn Parse
 }
 
 pub trait Parser {
-    fn parse(&self, file_input: &str) -> Vec<(SymbolSpan, SymbolSpan)>;
+    fn parse(&self, file_input: &str) -> Result<Vec<(SymbolSpan, SymbolSpan)>, &str>;
 }

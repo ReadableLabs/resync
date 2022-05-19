@@ -5,6 +5,7 @@ mod sync;
 
 use std::path::Path;
 use aho_corasick::AhoCorasick;
+use std::io::{stdin, stdout, Read, Write};
 use std::fs::{read_to_string};
 use clap::{Arg, Command};
 use walkdir::WalkDir;
@@ -13,6 +14,7 @@ use parsers::base::get_parser;
 use git2::Repository;
 use pathdiff::diff_paths;
 use std::ffi::OsStr;
+use bat::PrettyPrinter;
 
 fn main() {
     let matches = Command::new("Resync")
@@ -86,27 +88,47 @@ fn main() {
             // println!("{}", file.path().to_str().unwrap());
             // let file = matches.value_of("check").expect("Error: no file given");
             // let full_dir = working_dir.join(file);
-            let read = read_to_string(file.path()).expect("Failed to read file");
-            let lines: Vec<&str> = read.split("\n").collect();
-
-            let relative_path = diff_paths(file.path(), working_dir).unwrap();
-            println!("{}", relative_path.display());
-
-            let repo = Repository::open(working_dir).expect("Failed to open repo");
-
-            let blame_lines = info::get_line_info(&repo, &relative_path).expect("Error blaming file");
             // let commit_diff = info::get_commit_diff(working_dir, "56454c97", "affe6a76").unwrap();
             // println!("changed commits, {}", commit_diff);
 
             // let ext = file.path().extension().and_then(OsStr::to_str).unwrap();
 
+            // parser should be first, and then try to read
             let parser = match get_parser(file.path(), &patterns) {
                 Some(parser) => parser,
                 _ => {
                     continue;
                 }
             };
-            let all_funs = parser.parse(&read);
+            let read = match read_to_string(file.path()) {
+                Ok(read) => read,
+                Err(_) => {
+                    println!("Failed to read file {}, skipping", file.path().display());
+                    continue;
+                }
+            };
+            let lines: Vec<&str> = read.split("\n").collect();
+
+            let relative_path = diff_paths(file.path(), working_dir).unwrap();
+            // println!("{}", relative_path.display());
+
+            let repo = Repository::open(working_dir).expect("Failed to open repo");
+
+            let blame_lines = match info::get_line_info(&repo, &relative_path) {
+                Ok(lines) => lines,
+                Err(e) => {
+                    println!("{}", e);
+                    println!("Failed checking {}, continuing", file.path().display());
+                    continue;
+                }
+            };
+            let all_funs = match parser.parse(&read) {
+                Ok(funs) => funs,
+                Err(e) => {
+                    println!("Failed to parse file. Error {}. Skipping", e);
+                    continue;
+                }
+            };
 
             // make a module which checks all of these, checkall, which you can implement
             for (comment, function) in all_funs {
@@ -117,6 +139,7 @@ fn main() {
                 let function_info = blame_lines.get(&fun_idx).expect("Failed to get function from blame lines");
 
                 if function_info.time > comment_info.time {
+                    println!("latest line - {} - {}", comment_info.time, function_info.time);
                     let commit_diff = info::get_commit_diff(&repo, &function_info.commit, &comment_info.commit).expect("Failed to get commit diff");
                     println!("comment diff - {}", commit_diff);
                     // if commit_diff < 20 {
@@ -131,6 +154,9 @@ fn main() {
                     // println!("Is out of sync with...");
                     print_symbol(&lines, &function, &comment, &file_path, ext);
                     println!("");
+                    // let mut stdout = stdout();
+                    // stdout.flush().unwrap();
+                    // stdin().read(&mut [0]).unwrap();
                 }
             }
 

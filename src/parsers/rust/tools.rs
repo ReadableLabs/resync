@@ -1,5 +1,6 @@
 use syn::{Item, ImplItem, Attribute};
 use crate::parsers::types::{SymbolSpan, LineSpan};
+use proc_macro2::LineColumn;
 use std::vec::Vec;
 
 // will try to get these merged into upstream syn so this code doesn't have to be here.
@@ -47,8 +48,21 @@ pub fn get_comment_range(attrs: &Vec<Attribute>) -> Option<SymbolSpan> {
         return None;
     }
 
-    let mut start = attrs[0].path.get_ident().expect("Failed to get identifier").span().start();
-    let mut end = attrs[0].path.get_ident().expect("Failed to get identifier").span().end();
+    let mut start: Option<LineColumn> = None;
+    // match attrs[0].path.get_ident() {
+    //     Some(ident) => ident.span().start(),
+    //     _ => {
+    //         return None;
+    //     }
+    // };
+
+    let mut end: Option<LineColumn> = None;
+    // match attrs[0].path.get_ident() {
+    //     Some(ident) => ident.span().end(),
+    //     _ => {
+    //         return None;
+    //     }
+    // };
 
     for attr in attrs {
         let ident = match attr.path.get_ident() {
@@ -64,24 +78,53 @@ pub fn get_comment_range(attrs: &Vec<Attribute>) -> Option<SymbolSpan> {
 
         let span = ident.span();
 
-        if span.start().line < start.line {
-            start = span.start();
+        match start {
+            Some(start_val) => {
+                if span.start().line < start_val.line {
+                    start = Some(span.start());
+                }
+            },
+            _ => {
+                start = Some(span.start());
+            },
         }
 
-        if span.end().line > end.line {
-            end = span.end();
+        // if span.start().line < start.line {
+        //     start = span.start();
+        // }
+
+        match end {
+            Some(end_val) => {
+                if span.end().line > end_val.line {
+                    end = Some(span.end());
+                }
+            },
+            _ => {
+                end = Some(span.end());
+            }
         }
+
+        // if span.end().line > end.line {
+        //     end = span.end();
+        // }
+    }
+
+    // println!("{:#?} - {:#?}", start, end);
+
+    if start.is_none() || end.is_none() {
+        return None;
     }
 
     return Some(SymbolSpan {
         start: LineSpan {
-            line: start.line,
-            character: start.column
+            line: start.unwrap().line,
+            character: start.unwrap().column
         },
         end: LineSpan {
-            line: end.line,
-            character: end.column
+            line: end.unwrap().line,
+            character: end.unwrap().column
         }
     });
+
 }
 

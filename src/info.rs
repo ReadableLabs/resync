@@ -14,8 +14,12 @@ pub fn get_line_info(repo: &Repository, file: &Path) -> Result<HashMap<usize, Li
 
     // let repo = Repository::open(path)?;
     let head = repo.head()?.peel_to_commit()?;
+    // println!("{}", head.id());
 
     let branch_name = format!("resync/{}", head.id());
+    // let branch_name = format!("{}", head.id());
+
+    // let branch_name = format!("resync/{}", head.id()); // use head, not this
     let spec = format!("{}:{}", branch_name, file.display());
 
     let branch_oid = match repo.find_branch(&branch_name, BranchType::Local) {
@@ -30,8 +34,10 @@ pub fn get_line_info(repo: &Repository, file: &Path) -> Result<HashMap<usize, Li
         Err(_) => None // maybe this isn't good
     };
 
+
     let mut blame_opts = BlameOptions::new();
-    blame_opts.oldest_commit(head.id()).newest_commit(*branch_oid.as_ref().unwrap_or(&head.id()));
+    // blame_opts.newest_commit(*branch_oid.as_ref().unwrap_or(&head.id()));
+    // blame_opts.oldest_commit(head.id()).newest_commit(*branch_oid.as_ref().unwrap_or(&head.id()));
 
     let blame = repo.blame_file(file, Some(&mut blame_opts))?;
     let object = repo.revparse_single(&spec[..])?;
@@ -40,6 +46,7 @@ pub fn get_line_info(repo: &Repository, file: &Path) -> Result<HashMap<usize, Li
     let reader = BufReader::new(blob.content());
     for (i, _) in reader.lines().enumerate() {
         if let Some(hunk) = blame.get_line(i + 1) {
+            // println!("{} - {}", i + 1, hunk.final_signature().when().seconds());
             let commit_id = format!("{}", hunk.final_commit_id());
             // println!("{} - {}", i + 1, commit_id);
             let time = hunk.final_signature().when().seconds();
