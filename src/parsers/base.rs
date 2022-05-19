@@ -31,7 +31,7 @@ pub fn get_parser(file: &Path, ignore_patterns: &[&str]) -> Option<Box<dyn Parse
         */
         "rs" => Some(Box::new(RsParser {})),
         _ => {
-            println!("Language '{}' for {} not supported, continuing.", extension, f);
+            // println!("Language '{}' for {} not supported, continuing.", extension, f);
             None
         }
     }

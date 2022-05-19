@@ -9,7 +9,7 @@ use std::io::{stdin, stdout, Read, Write};
 use std::fs::{read_to_string};
 use clap::{Arg, Command};
 use walkdir::WalkDir;
-use tools::{get_latest_line, print_symbol};
+use tools::{get_latest_line, print_symbol, check_control};
 use parsers::base::get_parser;
 use git2::Repository;
 use pathdiff::diff_paths;
@@ -139,6 +139,9 @@ fn main() {
                 let function_info = blame_lines.get(&fun_idx).expect("Failed to get function from blame lines");
 
                 if function_info.time > comment_info.time {
+                    if check_control(&blame_lines, &function) {
+                        continue;
+                    }
                     println!("latest line - {} - {}", comment_info.time, function_info.time);
                     let commit_diff = info::get_commit_diff(&repo, &function_info.commit, &comment_info.commit).expect("Failed to get commit diff");
                     println!("comment diff - {}", commit_diff);

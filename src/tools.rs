@@ -26,6 +26,26 @@ pub fn get_latest_line(blame_info: &HashMap<usize, LineInfo>, symbol: &SymbolSpa
     // return latest;
 }
 
+pub fn check_control(blame_info: &HashMap<usize, LineInfo>, symbol: &SymbolSpan) -> bool {
+    let mut map: HashMap<u64, f32> = HashMap::new();
+    let mut total_lines: f32 = 0.0;
+    for line in symbol.start.line..symbol.end.line {
+        let line_info = blame_info.get(&line).expect("Failed to get line");
+        let count = map.entry(line_info.time).or_insert(0.0);
+        *count += 1.0;
+        total_lines += 1.0;
+    }
+
+    for (time, amount) in &map {
+        let control = amount / total_lines;
+        if control > 0.30 {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 pub fn print_symbol(lines: &Vec<&str>, function: &SymbolSpan, comment: &SymbolSpan, file: &Path, language: &str) {
     let function_start = function.start.line;
     let function_end = function.end.line;
@@ -33,10 +53,15 @@ pub fn print_symbol(lines: &Vec<&str>, function: &SymbolSpan, comment: &SymbolSp
     let comment_start = comment.start.line;
     let comment_end = comment.end.line;
 
+    let new_function_end = match function_start + 3 >= function_end {
+        true => function_end,
+        false => function_start + 3,
+    };
+
     let ranges = vec!(
     LineRange::new(
         function_start,
-        function_end
+        new_function_end
     ),
     LineRange::new(
         comment_start,
