@@ -9,6 +9,7 @@ pub struct LineInfo {
     pub commit: String,
 }
 
+// refactor commit diff
 pub fn get_line_info(repo: &Repository, file: &Path) -> Result<HashMap<usize, LineInfo>, Error> { // TODO: make blame oldest and newest commit be equivalent to head id passed in
     let mut lines: HashMap<usize, LineInfo> = HashMap::new();
 
