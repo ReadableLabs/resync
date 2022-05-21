@@ -88,33 +88,33 @@ pub fn print_symbol(lines: &Vec<&str>, function: &SymbolSpan, comment: &SymbolSp
 pub fn unix_time_diff(current: u128, prev: u128) -> String {
     let elapsed = current - prev;
 
-    let msPerMin = 60 * 1000;
-    let msPerHour= msPerMin * 60;
-    let msPerDay= msPerHour * 24;
-    let msPerMonth= msPerDay * 30;
-    let msPerYear = msPerDay * 365;
+    let s_per_min = 60;
+    let s_per_hour= s_per_min * 60;
+    let s_per_day= s_per_hour * 24;
+    let s_per_month= s_per_day * 30;
+    let s_per_year = s_per_day * 365;
 
-    if elapsed < msPerMin {
+    if elapsed < s_per_min {
         return format!("{} seconds ago", elapsed / 1000);
     }
 
-    else if elapsed < msPerHour {
-        return format!("{} minutes ago", elapsed / msPerMin);
+    else if elapsed < s_per_hour {
+        return format!("{} minutes ago", elapsed / s_per_min);
     }
 
-    else if elapsed < msPerDay {
-        return format!("{} hours ago", elapsed / msPerHour);
+    else if elapsed < s_per_day {
+        return format!("{} hours ago", elapsed / s_per_hour);
     }
 
-    else if elapsed < msPerMonth {
-        return format!("{} days ago", elapsed / msPerDay);
+    else if elapsed < s_per_month {
+        return format!("{} days ago", elapsed / s_per_day);
     }
 
-    else if elapsed < msPerYear {
-        return format!("{} months ago", elapsed / msPerMonth);
+    else if elapsed < s_per_year {
+        return format!("{} months ago", elapsed / s_per_month);
     }
 
     else {
-        return format!("{} years ago", elapsed / msPerYear);
+        return format!("{} years ago", elapsed / s_per_year);
     }
 }

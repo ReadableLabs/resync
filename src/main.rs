@@ -144,11 +144,11 @@ fn main() {
                         continue;
                     }
                     // println!("latest line - {} - {}", comment_info.time, function_info.time);
-                    let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_millis();
-                    let time_diff = unix_time_diff(current_time, comment_info.time as u128);
+                    let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs();
+                    let time_diff = unix_time_diff(current_time.into(), comment_info.time.into());
                     println!("{}", time_diff);
                     let commit_diff = info::get_commit_diff(&repo, &Oid::from_str(&function_info.commit).unwrap(), &Oid::from_str(&comment_info.commit).unwrap()).expect("Failed to get commit diff");
-                    println!("comment diff - {}", commit_diff);
+                    println!("{} commits since update", commit_diff);
                     // if commit_diff < 20 {
                     //     continue;
                     // }
