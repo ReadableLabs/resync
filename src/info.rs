@@ -68,19 +68,31 @@ pub fn get_line_info(repo: &Repository, file: &Path) -> Result<HashMap<usize, Li
 }
 
 /// pass in repo for later
-pub fn get_commit_diff(repo: &Repository, new: &str, old: &str) -> Result<usize, Error> {
+pub fn get_commit_diff(repo: &Repository, new: &Oid, old: &Oid) -> Result<usize, Error> {
     // let repo = Repository::open(path)?;
+
+    let master_commit = repo.head()?.peel_to_commit()?;
 
     let mut revwalk = repo.revwalk()?;
 
     revwalk.set_sorting(git2::Sort::TIME)?;
 
-    revwalk.hide(Oid::from_str(old).unwrap())?;
-    revwalk.push(Oid::from_str(new).unwrap())?;
+    revwalk.hide(*old)?;
+    revwalk.push(master_commit.id())?; // new
     // let id = repo.revparse_single(old)?.id();
     // revwalk.push(id)?;
 
     let count = revwalk.count();
+    // let mut total_count = 0;
+    // for commit in revwalk {
+    //     total_count += 1;
+    //     if commit.unwrap().eq(old) {
+    //         println!("break");
+    //         break;
+    //     }
+    // }
+
+    // println!("total count - {}", total_count);
 
     // for id in revwalk {
     //     let id = id?;

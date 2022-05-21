@@ -11,10 +11,11 @@ use clap::{Arg, Command};
 use walkdir::WalkDir;
 use tools::{get_latest_line, print_symbol, check_control};
 use parsers::base::get_parser;
-use git2::Repository;
+use git2::{Repository, Oid};
 use pathdiff::diff_paths;
-use std::ffi::OsStr;
-use bat::PrettyPrinter;
+use std::time::SystemTime;
+
+use crate::tools::unix_time_diff;
 
 fn main() {
     let matches = Command::new("Resync")
@@ -142,8 +143,11 @@ fn main() {
                     if check_control(&blame_lines, &function) {
                         continue;
                     }
-                    println!("latest line - {} - {}", comment_info.time, function_info.time);
-                    let commit_diff = info::get_commit_diff(&repo, &function_info.commit, &comment_info.commit).expect("Failed to get commit diff");
+                    // println!("latest line - {} - {}", comment_info.time, function_info.time);
+                    let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_millis();
+                    let time_diff = unix_time_diff(current_time, comment_info.time as u128);
+                    println!("{}", time_diff);
+                    let commit_diff = info::get_commit_diff(&repo, &Oid::from_str(&function_info.commit).unwrap(), &Oid::from_str(&comment_info.commit).unwrap()).expect("Failed to get commit diff");
                     println!("comment diff - {}", commit_diff);
                     // if commit_diff < 20 {
                     //     continue;

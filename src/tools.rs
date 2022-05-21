@@ -85,3 +85,36 @@ pub fn print_symbol(lines: &Vec<&str>, function: &SymbolSpan, comment: &SymbolSp
 
 }
 
+pub fn unix_time_diff(current: u128, prev: u128) -> String {
+    let elapsed = current - prev;
+
+    let msPerMin = 60 * 1000;
+    let msPerHour= msPerMin * 60;
+    let msPerDay= msPerHour * 24;
+    let msPerMonth= msPerDay * 30;
+    let msPerYear = msPerDay * 365;
+
+    if elapsed < msPerMin {
+        return format!("{} seconds ago", elapsed / 1000);
+    }
+
+    else if elapsed < msPerHour {
+        return format!("{} minutes ago", elapsed / msPerMin);
+    }
+
+    else if elapsed < msPerDay {
+        return format!("{} hours ago", elapsed / msPerHour);
+    }
+
+    else if elapsed < msPerMonth {
+        return format!("{} days ago", elapsed / msPerDay);
+    }
+
+    else if elapsed < msPerYear {
+        return format!("{} months ago", elapsed / msPerMonth);
+    }
+
+    else {
+        return format!("{} years ago", elapsed / msPerYear);
+    }
+}
