@@ -1,17 +1,24 @@
 ## Resync
 
-![1]()
+<!-- ![1]() -->
 
-**A multi language comment checker.**
+Resync is a multi language comment checker written in rust. It's a CLI tool which uses the git history of your repo to detect out of sync comments.
 
-Resync uses the git history of your repo to detect out of sync comments. It's a CLI tool which works in multiple languages, and supports docstrings and inline comments.
+Resync looks at things such as the commit dates, and commit consistency to tell if a comment is stale or not. While resync may not be 100% accurate at identifying out of sync comments, it tries to only show you places where the function has been updated a lot, but the comment hasn't.
 
-The goal of resync is to be a fast, small, and simple comment checker. It uses other libraries for parsing, but the release build should try to be under 10mb.
+![video showing resync](1.png)
 
 There's also a vscode extension which supports resync, showing you all out of sync comments while you're coding.
 ![2]()
 
+[You can download it here](https://github.com/ReadableLabs/resync)
+
+### Download
+
+- Vscode
+
 ### Supported Languages
+
 - [x] Rust
 - [ ] Javscript
 - [ ] Typescript
@@ -24,17 +31,9 @@ There's also a vscode extension which supports resync, showing you all out of sy
 - [ ] Java
 
 ### Docs
-TODO
-
-### Project Structure
-```
-├── docs
-├── src
-│   └── parsers # See doc/parsers.md for more details
-└── tests
-```
-[parsers.md](./doc/parsers.md)
 
 ### TODO
+
+- Use [cursive](https://github.com/gyscos/cursive) to make a terminal GUI for resync
 - use optional dependencies if you only want to compile for a few languages
-- Make work on base branch without sync (replace all 0's with current unix time) - sync will be used for Readable
+- Allow resync to be used on the master branch, without creating resync branch

@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
-use std::str;
 use git2::{Repository, BlameOptions, Error, BranchType, Oid};
 
 pub struct LineInfo {
@@ -9,18 +8,13 @@ pub struct LineInfo {
     pub commit: String,
 }
 
-// refactor commit diff
-pub fn get_line_info(repo: &Repository, file: &Path) -> Result<HashMap<usize, LineInfo>, Error> { // TODO: make blame oldest and newest commit be equivalent to head id passed in
+pub fn get_line_info(repo: &Repository, file: &Path) -> Result<HashMap<usize, LineInfo>, Error> {
     let mut lines: HashMap<usize, LineInfo> = HashMap::new();
 
-    // let repo = Repository::open(path)?;
     let head = repo.head()?.peel_to_commit()?;
-    // println!("{}", head.id());
 
     let branch_name = format!("resync/{}", head.id());
-    // let branch_name = format!("{}", head.id());
 
-    // let branch_name = format!("resync/{}", head.id()); // use head, not this
     let spec = format!("{}:{}", branch_name, file.display());
 
     let branch_oid = match repo.find_branch(&branch_name, BranchType::Local) {
@@ -37,8 +31,6 @@ pub fn get_line_info(repo: &Repository, file: &Path) -> Result<HashMap<usize, Li
 
 
     let mut blame_opts = BlameOptions::new();
-    // blame_opts.newest_commit(*branch_oid.as_ref().unwrap_or(&head.id()));
-    // blame_opts.oldest_commit(head.id()).newest_commit(*branch_oid.as_ref().unwrap_or(&head.id()));
 
     let blame = repo.blame_file(file, Some(&mut blame_opts))?;
     let object = repo.revparse_single(&spec[..])?;
@@ -47,9 +39,7 @@ pub fn get_line_info(repo: &Repository, file: &Path) -> Result<HashMap<usize, Li
     let reader = BufReader::new(blob.content());
     for (i, _) in reader.lines().enumerate() {
         if let Some(hunk) = blame.get_line(i + 1) {
-            // println!("{} - {}", i + 1, hunk.final_signature().when().seconds());
             let commit_id = format!("{}", hunk.final_commit_id());
-            // println!("{} - {}", i + 1, commit_id);
             let time = hunk.final_signature().when().seconds();
             lines.insert(
                 i.try_into().unwrap(),
@@ -58,8 +48,6 @@ pub fn get_line_info(repo: &Repository, file: &Path) -> Result<HashMap<usize, Li
                     commit: commit_id
                 }
             );
-            // lines.insert(i.try_into().unwrap(), time.try_into().unwrap());
-            // could use softmax
         }
     }
 
@@ -68,9 +56,7 @@ pub fn get_line_info(repo: &Repository, file: &Path) -> Result<HashMap<usize, Li
 }
 
 /// pass in repo for later
-pub fn get_commit_diff(repo: &Repository, new: &Oid, old: &Oid) -> Result<usize, Error> {
-    // let repo = Repository::open(path)?;
-
+pub fn get_commit_diff(repo: &Repository, old: &Oid) -> Result<usize, Error> {
     let master_commit = repo.head()?.peel_to_commit()?;
 
     let mut revwalk = repo.revwalk()?;
@@ -78,26 +64,9 @@ pub fn get_commit_diff(repo: &Repository, new: &Oid, old: &Oid) -> Result<usize,
     revwalk.set_sorting(git2::Sort::TIME)?;
 
     revwalk.hide(*old)?;
-    revwalk.push(master_commit.id())?; // new
-    // let id = repo.revparse_single(old)?.id();
-    // revwalk.push(id)?;
+    revwalk.push(master_commit.id())?;
 
     let count = revwalk.count();
-    // let mut total_count = 0;
-    // for commit in revwalk {
-    //     total_count += 1;
-    //     if commit.unwrap().eq(old) {
-    //         println!("break");
-    //         break;
-    //     }
-    // }
-
-    // println!("total count - {}", total_count);
-
-    // for id in revwalk {
-    //     let id = id?;
-    //     println!("{}", id);
-    // }
 
     Ok(count)
 

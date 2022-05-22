@@ -13,7 +13,6 @@ pub fn get_latest_line(blame_info: &HashMap<usize, LineInfo>, symbol: &SymbolSpa
 
     let mut latest = 0;
     let mut time = 0;
-    // let mut latest = blame_info.get(&start).expect("Failed to get initial line");
     for line in start..end {
         let line_info = blame_info.get(&line).expect("Failed to get line at blame");
         if line_info.time > time {
@@ -26,9 +25,13 @@ pub fn get_latest_line(blame_info: &HashMap<usize, LineInfo>, symbol: &SymbolSpa
     // return latest;
 }
 
+/// Checks if one commit makes up more than x percent of a function.
+/// 
+/// Eg: if commit aaaa doesn't make up more than 40% of a function, it returns false
 pub fn check_control(blame_info: &HashMap<usize, LineInfo>, symbol: &SymbolSpan) -> bool {
     let mut map: HashMap<u64, f32> = HashMap::new();
     let mut total_lines: f32 = 0.0;
+
     for line in symbol.start.line..symbol.end.line {
         let line_info = blame_info.get(&line).expect("Failed to get line");
         let count = map.entry(line_info.time).or_insert(0.0);
@@ -46,7 +49,7 @@ pub fn check_control(blame_info: &HashMap<usize, LineInfo>, symbol: &SymbolSpan)
     return false;
 }
 
-pub fn print_symbol(lines: &Vec<&str>, function: &SymbolSpan, comment: &SymbolSpan, file: &Path, language: &str) {
+pub fn print_symbol(function: &SymbolSpan, comment: &SymbolSpan, file: &Path, language: &str) {
     let function_start = function.start.line;
     let function_end = function.end.line;
 
@@ -68,8 +71,6 @@ pub fn print_symbol(lines: &Vec<&str>, function: &SymbolSpan, comment: &SymbolSp
         comment_end
     ));
 
-    let function_range = vec!(LineRange::new(function_start, function_end));
-
     PrettyPrinter::new()
         .input_file(file)
         .language(language)
@@ -77,12 +78,6 @@ pub fn print_symbol(lines: &Vec<&str>, function: &SymbolSpan, comment: &SymbolSp
         .line_ranges(LineRanges::from(ranges))
         .print()
         .unwrap();
-
-    // do +3 and show line numbers
-    // for line in function_start..function_end {
-    //     println!("{}: |{}", line, lines[usize::try_from(line).unwrap()]);
-    // }
-
 }
 
 pub fn unix_time_diff(current: u128, prev: u128) -> String {

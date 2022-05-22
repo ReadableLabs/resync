@@ -49,20 +49,8 @@ pub fn get_comment_range(attrs: &Vec<Attribute>) -> Option<SymbolSpan> {
     }
 
     let mut start: Option<LineColumn> = None;
-    // match attrs[0].path.get_ident() {
-    //     Some(ident) => ident.span().start(),
-    //     _ => {
-    //         return None;
-    //     }
-    // };
 
     let mut end: Option<LineColumn> = None;
-    // match attrs[0].path.get_ident() {
-    //     Some(ident) => ident.span().end(),
-    //     _ => {
-    //         return None;
-    //     }
-    // };
 
     for attr in attrs {
         let ident = match attr.path.get_ident() {
@@ -89,10 +77,6 @@ pub fn get_comment_range(attrs: &Vec<Attribute>) -> Option<SymbolSpan> {
             },
         }
 
-        // if span.start().line < start.line {
-        //     start = span.start();
-        // }
-
         match end {
             Some(end_val) => {
                 if span.end().line > end_val.line {
@@ -103,13 +87,7 @@ pub fn get_comment_range(attrs: &Vec<Attribute>) -> Option<SymbolSpan> {
                 end = Some(span.end());
             }
         }
-
-        // if span.end().line > end.line {
-        //     end = span.end();
-        // }
     }
-
-    // println!("{:#?} - {:#?}", start, end);
 
     if start.is_none() || end.is_none() {
         return None;
