@@ -71,7 +71,8 @@ fn main() {
 
         let ac = AhoCorasick::new(&patterns);
         for file in WalkDir::new(working_dir).into_iter().filter_map(|e| e.ok()) {
-            // check_file(&repo, &working_dir, &file.path());
+            check_file(&repo, &working_dir, &file.path(), &ac);
+            /*
             let f = file.path().to_str().unwrap();
             if ac.is_match(f) {
                 continue;
@@ -130,7 +131,7 @@ fn main() {
                 let comment_info = blame_lines.get(&comment_idx).expect("Failed to get comment from blame lines");
                 let function_info = blame_lines.get(&fun_idx).expect("Failed to get function from blame lines");
 
-                if function_info.time < comment_info.time {
+                if function_info.time <= comment_info.time {
                     continue;
                 }
 
@@ -151,6 +152,7 @@ fn main() {
                 print_symbol(&function, &comment, &file_path, ext);
                 println!("");
             }
+            */
         }
     }
 
