@@ -37,3 +37,4 @@ There's also a vscode extension which supports resync, showing you all out of sy
 - Use [cursive](https://github.com/gyscos/cursive) to make a terminal GUI for resync
 - use optional dependencies if you only want to compile for a few languages
 - Allow resync to be used on the master branch, without creating resync branch
+- Make async for faster querying
