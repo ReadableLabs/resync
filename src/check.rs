@@ -9,7 +9,7 @@ use std::fs::{read_to_string};
 use std::time::SystemTime;
 use git2::{Repository, Oid};
 
-pub fn check_file(repo: &Repository, working_dir: &Path, file: &Path, ac: &AhoCorasick) {
+pub fn check_file(repo: &Repository, working_dir: &Path, file: &Path, ac: &AhoCorasick, porcelain: &bool) {
     let patterns = [".git", ".swp", "node_modules"]; // TODO: add global pattern list, or read gitignore
     // let f = file.path().to_str().unwrap();
     if ac.is_match(file.to_str().unwrap()) {
@@ -76,7 +76,7 @@ pub fn check_file(repo: &Repository, working_dir: &Path, file: &Path, ac: &AhoCo
         }
 
         let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs();
-        let time_diff = unix_time_diff(current_time.into(), comment_info.time.into());
+        let time_diff = unix_time_diff(current_time.into(), comment_info.time.into(), &porcelain);
         println!("{}", time_diff);
         let commit_diff = get_commit_diff(&repo, &Oid::from_str(&comment_info.commit).unwrap()).expect("Failed to get commit diff");
         println!("{} commits since update", commit_diff);
@@ -85,7 +85,7 @@ pub fn check_file(repo: &Repository, working_dir: &Path, file: &Path, ac: &AhoCo
         let character = function.start.character;
         println!("{}:{}:{}", file.display(), line, character);
 
-        print_symbol(&function, &comment, &file, ext);
+        print_symbol(&function, &comment, &file, ext, &porcelain);
         println!("");
     }
 }

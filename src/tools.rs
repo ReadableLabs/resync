@@ -49,7 +49,7 @@ pub fn check_control(blame_info: &HashMap<usize, LineInfo>, symbol: &SymbolSpan)
     return false;
 }
 
-pub fn print_symbol(function: &SymbolSpan, comment: &SymbolSpan, file: &Path, language: &str) {
+pub fn print_symbol(function: &SymbolSpan, comment: &SymbolSpan, file: &Path, language: &str, porcelain: &bool) {
     let function_start = function.start.line;
     let function_end = function.end.line;
 
@@ -71,16 +71,24 @@ pub fn print_symbol(function: &SymbolSpan, comment: &SymbolSpan, file: &Path, la
         comment_end
     ));
 
-    PrettyPrinter::new()
+    if *porcelain == false {
+        PrettyPrinter::new()
         .input_file(file)
         .language(language)
         .line_numbers(true)
         .line_ranges(LineRanges::from(ranges))
         .print()
         .unwrap();
+    }
+    else {
+        println!("{}", comment.start.line);
+        println!("{}", comment.end.line);
+    }
+
+
 }
 
-pub fn unix_time_diff(current: u128, prev: u128) -> String {
+pub fn unix_time_diff(current: u128, prev: u128, porcelain: &bool) -> String {
     let elapsed = current - prev;
 
     let s_per_min = 60;
