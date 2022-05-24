@@ -76,7 +76,7 @@ pub fn check_file(repo: &Repository, working_dir: &Path, file: &Path, ac: &AhoCo
         }
 
         let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs();
-        let time_diff = unix_time_diff(current_time.into(), comment_info.time.into(), &porcelain);
+        let time_diff = unix_time_diff(current_time.into(), comment_info.time.into());
         println!("{}", time_diff);
         let commit_diff = get_commit_diff(&repo, &Oid::from_str(&comment_info.commit).unwrap()).expect("Failed to get commit diff");
         println!("{} commits since update", commit_diff);
@@ -86,6 +86,5 @@ pub fn check_file(repo: &Repository, working_dir: &Path, file: &Path, ac: &AhoCo
         println!("{}:{}:{}", file.display(), line, character);
 
         print_symbol(&function, &comment, &file, ext, &porcelain);
-        println!("");
     }
 }

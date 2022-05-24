@@ -79,6 +79,7 @@ pub fn print_symbol(function: &SymbolSpan, comment: &SymbolSpan, file: &Path, la
         .line_ranges(LineRanges::from(ranges))
         .print()
         .unwrap();
+        println!("");
     }
     else {
         println!("{}", comment.start.line);
@@ -88,7 +89,7 @@ pub fn print_symbol(function: &SymbolSpan, comment: &SymbolSpan, file: &Path, la
 
 }
 
-pub fn unix_time_diff(current: u128, prev: u128, porcelain: &bool) -> String {
+pub fn unix_time_diff(current: u128, prev: u128) -> String {
     let elapsed = current - prev;
 
     let s_per_min = 60;
