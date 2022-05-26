@@ -13,7 +13,8 @@ pub fn get_latest_line(blame_info: &HashMap<usize, LineInfo>, symbol: &SymbolSpa
 
     let mut latest = 0;
     let mut time = 0;
-    for line in start..end {
+    for line in start..=end {
+        // println!("{}", line);
         let line_info = blame_info.get(&line).expect("Failed to get line at blame");
         if line_info.time > time {
             latest = line;
