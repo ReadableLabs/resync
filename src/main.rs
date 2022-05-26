@@ -1,7 +1,7 @@
-mod info;
-mod parsers;
-mod tools;
-mod sync;
+pub mod info;
+pub mod parsers;
+pub mod tools;
+pub mod sync;
 
 use std::{path::Path, any::Any};
 use aho_corasick::AhoCorasick;
