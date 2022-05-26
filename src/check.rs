@@ -79,7 +79,6 @@ pub fn check_file(repo: &Repository, working_dir: &Path, file: &Path, ac: &AhoCo
             continue;
         }
 
-        println!("{}, {}", function_info.time, comment_info.time);
         let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs();
         let time_diff = unix_time_diff(current_time.into(), comment_info.time.into());
         println!("{}", time_diff);
