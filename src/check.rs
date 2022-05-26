@@ -46,8 +46,11 @@ pub fn check_file(repo: &Repository, working_dir: &Path, file: &Path, ac: &AhoCo
     let blame_lines = match get_line_info(&repo, &relative_path) {
         Ok(lines) => lines,
         Err(e) => {
-            println!("{}", e);
-            println!("Failed checking {}, continuing", file.display());
+
+            if *porcelain != true {
+                println!("{}", e);
+                println!("Failed checking {}, continuing", file.display());
+            }
             return;
         }
     };
@@ -67,6 +70,7 @@ pub fn check_file(repo: &Repository, working_dir: &Path, file: &Path, ac: &AhoCo
         let comment_info = blame_lines.get(&comment_idx).expect("Failed to get comment from blame lines");
         let function_info = blame_lines.get(&fun_idx).expect("Failed to get function from blame lines");
 
+        // if the comment has been edited before, or at the same time as the function has
         if function_info.time <= comment_info.time {
             continue;
         }
@@ -75,6 +79,7 @@ pub fn check_file(repo: &Repository, working_dir: &Path, file: &Path, ac: &AhoCo
             continue;
         }
 
+        println!("{}, {}", function_info.time, comment_info.time);
         let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs();
         let time_diff = unix_time_diff(current_time.into(), comment_info.time.into());
         println!("{}", time_diff);

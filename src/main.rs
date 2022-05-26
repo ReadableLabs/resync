@@ -56,15 +56,19 @@ fn main() {
     let working_dir = Path::new(matches.value_of("dir").unwrap_or("/home/nevin/Desktop/testinit"));
     let repo = Repository::open(working_dir).expect("Failed to open repository");
     let porcelain = matches.is_present("porcelain");
-    println!("{}", porcelain);
+    // println!("{}", porcelain);
 
     if matches.is_present("sync") {
         match sync::sync(working_dir) {
             Ok(result) => {
-                println!("Succesfully synced {}", result);
+                if porcelain != true {
+                    println!("Succesfully synced {}", result);
+                }
             },
             Err(e) => {
-                println!("Failed to sync. Error: {}", e);
+                if porcelain != true {
+                    println!("Failed to sync. Error: {}", e);
+                }
             }
         }
     }
@@ -88,6 +92,6 @@ fn main() {
 
         check_file(&repo, &working_dir, &full_path, &ac, &porcelain);
     }
-    println!("Hello, world!");
+    // println!("Hello, world!");
 }
 

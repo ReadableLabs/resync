@@ -21,16 +21,22 @@ pub fn get_line_info(repo: &Repository, file: &Path) -> Result<HashMap<usize, Li
         Ok(branch) => {
            match branch.get().peel_to_commit() {
                 Ok(commit) => {
-                    Some(commit.id())
+                    commit.id()
                 },
-                _ => None
+                _ => {
+                    head.id()
+                }
             }
         },
-        Err(_) => None // maybe this isn't good
+        Err(_) => {
+            // println!("Failed getting resync branch oid");
+            panic!("Failed getting resync branch oid");
+        } // maybe this isn't good
     };
 
 
     let mut blame_opts = BlameOptions::new();
+    blame_opts.newest_commit(branch_oid);
 
     let blame = repo.blame_file(file, Some(&mut blame_opts))?;
     let object = repo.revparse_single(&spec[..])?;
