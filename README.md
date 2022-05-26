@@ -4,7 +4,9 @@
 
 Resync is a multi language comment checker written in rust. It's a CLI tool which uses the git history of your repo to detect out of sync comments.
 
-Resync looks at things such as the commit dates, and commit consistency to tell if a comment is stale or not. While resync may not be 100% accurate at identifying out of sync comments, it tries to only show you places where the function has been updated a lot, but the comment hasn't.
+Resync looks at things such as the commit dates, and commit consistency to tell if a comment is stale or not.
+
+Note: resync may not be 100% accurate at identifying out of sync comments, it tries to only show you places where the function has been updated a lot, but the comment hasn't.
 
 ![video showing resync](1.png)
 
