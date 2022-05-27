@@ -3,23 +3,21 @@ pub mod parsers;
 pub mod tools;
 pub mod sync;
 
+use std::ffi::OsStr;
 use std::path::Path;
 use aho_corasick::AhoCorasick;
 use resync::check::check_file;
 use clap::{Arg, Command};
 use walkdir::WalkDir;
 use git2::Repository;
+use std::env::current_dir;
+use std::fs::{File, remove_file};
 
 fn main() {
     let matches = Command::new("Resync")
         .version("0.1")
-        .author("Nevin P. <me@nevin.cc>")
-        .about("Keep track of out of sync comments")
-        .arg(Arg::new("dir")
-             .short('d')
-             .long("dir")
-             .help("Sets working dir")
-             .takes_value(true))
+        .author("Nevin Puri <me@nevin.cc>")
+        .about("Easily find out of sync comments")
         .arg(Arg::new("sync")
              .short('s')
              .long("sync")
@@ -43,37 +41,45 @@ fn main() {
              .short('m')
              .long("no-resync-branch")
              .help("Don't use or create a resync branch (out of sync comments won't be updated until you commit to your own branch)"))
+        .arg(Arg::new("dir")
+             .help("Sets working dir")
+             .short('d')
+             .long("dir")
+            .takes_value(true))
         .get_matches();
 
-        // get default dir: TODO
-    let working_dir = Path::new(matches.value_of("dir").unwrap_or("/home/nevin/Desktop/testinit"));
+    let current_dir_pathbuf = current_dir().unwrap();
+    let current_dir = current_dir_pathbuf.as_path();
+    // get default dir: TODO
+    let working_dir = match matches.value_of("dir") {
+        Some(value) => Path::new(value),
+        None => current_dir,
+    };
+
     let repo = Repository::open(working_dir).expect("Failed to open repository");
     let porcelain = matches.is_present("porcelain");
-    // println!("{}", porcelain);
 
-    if matches.is_present("sync") {
-        match sync::sync(working_dir) {
-            Ok(result) => {
-                if porcelain != true {
-                    println!("Succesfully synced {}", result);
-                }
-            },
-            Err(e) => {
-                if porcelain != true {
-                    println!("Failed to sync. Error: {}", e);
-                }
+    // make .file, sync, and then delete file to make sure branch is made
+    let temp_file = working_dir.join(".resync");
+
+    File::create(&temp_file).unwrap();
+
+    match sync::sync(working_dir) {
+        Ok(result) => {
+            // if porcelain != true {
+            //     println!("Succesfully synced {}", result);
+            // }
+        },
+        Err(e) => {
+            if porcelain != true {
+                println!("Failed to sync. Error: {}", e);
             }
         }
     }
 
-    if matches.is_present("check-dir") {
-        let patterns = [".git", ".swp", "node_modules"]; // TODO: add global pattern list, or read gitignore
+    remove_file(&temp_file).unwrap();
 
-        let ac = AhoCorasick::new(&patterns);
-        for file in WalkDir::new(working_dir).into_iter().filter_map(|e| e.ok()) {
-            check_file(&repo, &working_dir, &file.path(), &ac, &porcelain);
-        }
-    }
+    println!("Searching for out of sync comments...");
 
     if matches.is_present("check-file") {
         let patterns = [".git", ".swp", "node_modules"]; // TODO: add global pattern list, or read gitignore
@@ -84,6 +90,16 @@ fn main() {
         let full_path = Path::join(working_dir, file);
 
         check_file(&repo, &working_dir, &full_path, &ac, &porcelain);
+
+        std::process::exit(0);
+    }
+
+    let patterns = [".git", ".swp", "node_modules"]; // TODO: add global pattern list, or read gitignore
+
+    let ac = AhoCorasick::new(&patterns);
+    for file in WalkDir::new(working_dir).into_iter().filter_map(|e| e.ok()) {
+        // println!("{}", OsStr::to_str(file.file_name()).unwrap());
+        check_file(&repo, &working_dir, &file.path(), &ac, &porcelain);
     }
     // println!("Hello, world!");
 }

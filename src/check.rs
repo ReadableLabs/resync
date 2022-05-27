@@ -11,7 +11,7 @@ use std::time::SystemTime;
 use git2::{Repository, Oid};
 
 pub fn check_file(repo: &Repository, working_dir: &Path, file: &Path, ac: &AhoCorasick, porcelain: &bool) {
-    let patterns = [".git", ".swp", "node_modules"]; // TODO: add global pattern list, or read gitignore
+    let patterns = [".git", ".swp", "node_modules", "target"]; // TODO: add global pattern list, or read gitignore
     // let f = file.path().to_str().unwrap();
     if ac.is_match(file.to_str().unwrap()) {
         return;
@@ -76,8 +76,7 @@ pub fn check_file(repo: &Repository, working_dir: &Path, file: &Path, ac: &AhoCo
             continue;
         }
 
-        // println!("{}, {}", function_info.time, comment_info.time);
-
+        // helps show less false positives by only showing functions which have a lot of different commits
         if check_control(&blame_lines, &function) {
             continue;
         }
