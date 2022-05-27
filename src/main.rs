@@ -81,10 +81,11 @@ fn main() {
 
     println!("Searching for out of sync comments...");
 
-    if matches.is_present("check-file") {
-        let patterns = [".git", ".swp", "node_modules"]; // TODO: add global pattern list, or read gitignore
-        let ac = AhoCorasick::new(&patterns);
+    let patterns = [".git", ".swp", "node_modules"]; // TODO: add global pattern list, or read gitignore
 
+    let ac = AhoCorasick::new(&patterns);
+
+    if matches.is_present("check-file") {
         let file = matches.value_of("check-file").unwrap(); // file is relative path
         // get parent dir from working dir before doing this
         let full_path = Path::join(working_dir, file);
@@ -94,9 +95,6 @@ fn main() {
         std::process::exit(0);
     }
 
-    let patterns = [".git", ".swp", "node_modules"]; // TODO: add global pattern list, or read gitignore
-
-    let ac = AhoCorasick::new(&patterns);
     for file in WalkDir::new(working_dir).into_iter().filter_map(|e| e.ok()) {
         // println!("{}", OsStr::to_str(file.file_name()).unwrap());
         check_file(&repo, &working_dir, &file.path(), &ac, &porcelain);
