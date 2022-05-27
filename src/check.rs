@@ -4,6 +4,7 @@ use pathdiff::diff_paths;
 use crate::tools::{get_latest_line, print_symbol, check_control, unix_time_diff};
 use crate::parsers::base::get_parser;
 use crate::info::{get_line_info, get_commit_diff};
+use std::ffi::OsStr;
 use std::path::Path;
 use std::fs::{read_to_string};
 use std::time::SystemTime;
@@ -77,22 +78,27 @@ pub fn check_file(repo: &Repository, working_dir: &Path, file: &Path, ac: &AhoCo
 
         // println!("{}, {}", function_info.time, comment_info.time);
 
-        /*
         if check_control(&blame_lines, &function) {
             continue;
         }
-        */
 
         let current_time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs();
         let time_diff = unix_time_diff(current_time.into(), comment_info.time.into());
-        println!("{}", time_diff);
         let commit_diff = get_commit_diff(&repo, &Oid::from_str(&comment_info.commit).unwrap()).expect("Failed to get commit diff");
-        println!("{} commits since update", commit_diff);
 
         let line = function.start.line - 1;
         let character = function.start.character;
-        println!("{}:{}:{}", file.display(), line, character);
 
-        print_symbol(&function, &comment, &file, ext, &porcelain);
+        if *porcelain != true {
+            println!("{}", time_diff);
+            println!("{} commits since update", commit_diff); // change red green or yellow text changed a lot, little, or changed
+            println!("{}:{}:{}", file.display(), line, character);
+            print_symbol(&function, &comment, &file, ext);
+        }
+        else {
+            // println!("{}\n{} commits since update\n{}:{}:{}\n{}\n{}", time_diff, commit_diff, file.display(), line, character, comment.start.line, comment.end.line);
+            let file_name = file.file_name().and_then(OsStr::to_str).unwrap();
+            println!("{}\n{}\n{}\n{}\n{}\n{}", time_diff, commit_diff, relative_path.display(), file_name, comment.start.line, comment.end.line);
+        }
     }
 }
