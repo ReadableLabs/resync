@@ -3,19 +3,12 @@ pub mod parsers;
 pub mod tools;
 pub mod sync;
 
-use std::{path::Path, any::Any};
+use std::path::Path;
 use aho_corasick::AhoCorasick;
 use resync::check::check_file;
-use std::fs::{read_to_string};
 use clap::{Arg, Command};
 use walkdir::WalkDir;
-use tools::{get_latest_line, print_symbol, check_control};
-use parsers::base::get_parser;
-use git2::{Repository, Oid};
-use pathdiff::diff_paths;
-use std::time::SystemTime;
-
-use crate::tools::unix_time_diff;
+use git2::Repository;
 
 fn main() {
     let matches = Command::new("Resync")
