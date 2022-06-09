@@ -53,4 +53,4 @@ If you want to support a new language, view the [docs]() on how to do so.
 - Use [cursive](https://github.com/gyscos/cursive) to make a terminal GUI for resync
 - use optional dependencies if you only want to compile for a few languages
 - Allow resync to be used on the master branch, without creating resync branch (maybe)
-- Make async for faster querying
+- Make async for faster querying. Super fast idea: first get all files which might be good to check, load them into memory one at a time (non async). Then go through them in batches of 4

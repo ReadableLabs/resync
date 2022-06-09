@@ -2,8 +2,8 @@ pub mod info;
 pub mod parsers;
 pub mod tools;
 pub mod sync;
+pub mod config;
 
-use std::ffi::OsStr;
 use std::path::Path;
 use aho_corasick::AhoCorasick;
 use resync::check::check_file;
@@ -65,7 +65,7 @@ fn main() {
     File::create(&temp_file).unwrap();
 
     match sync::sync(working_dir) {
-        Ok(result) => {
+        Ok(_result) => {
             // if porcelain != true {
             //     println!("Succesfully synced {}", result);
             // }
