@@ -48,6 +48,9 @@ If you want to support a new language, view the [docs]() on how to do so.
 - Resync outputs "Searching for out of sync comments..." but nothing else
   - Resync didn't find any out of sync comments in your project.
 
+
+### Current
+- internal db to check when file was last modified to make subsequent parses quicker 
 ### TODO
 
 - Use [cursive](https://github.com/gyscos/cursive) to make a terminal GUI for resync
