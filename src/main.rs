@@ -79,7 +79,9 @@ fn main() {
 
     remove_file(&temp_file).unwrap(); // check if result is none or not
 
-    println!("Searching for out of sync comments...");
+    if porcelain == false {
+        println!("Searching for out of sync comments...");
+    }
 
     let patterns = [".git", ".swp", "node_modules"]; // TODO: add global pattern list, or read gitignore
 
