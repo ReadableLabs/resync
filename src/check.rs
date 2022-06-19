@@ -1,5 +1,6 @@
 use aho_corasick::AhoCorasick;
 use pathdiff::diff_paths;
+use walkdir::WalkDir;
 
 use crate::tools::{get_latest_line, print_symbol, check_control, unix_time_diff};
 use crate::parsers::get_parser;
@@ -134,7 +135,6 @@ impl Checker {
             }
 
             else {
-                // println!("{}\n{} commits since update\n{}:{}:{}\n{}\n{}", time_diff, commit_diff, file.display(), line, character, comment.start.line, comment.end.line);
                 let file_name = file.file_name().and_then(OsStr::to_str).unwrap();
                 println!("{}\n{}\n{}\n{}\n{}\n{}", time_diff, commit_diff, relative_path.display(), file_name, comment.start.line, comment.end.line);
             }
@@ -142,8 +142,8 @@ impl Checker {
     }
 
     pub fn check_dir(&self, dir: &Path) {
+        for file in WalkDir::new(&self.working_dir).into_iter().filter_map(|e| e.ok()) {
+            self.check_file(file.path().to_path_buf());
+        }
     }
-}
-
-pub fn check_file(repo: &Repository, working_dir: &Path, file: &Path, ac: &AhoCorasick, porcelain: &bool) {
 }

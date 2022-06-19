@@ -7,7 +7,7 @@ pub mod formatters;
 
 use std::path::Path;
 use aho_corasick::AhoCorasick;
-use resync::check::{check_file, Checker};
+use resync::check::Checker;
 use resync::config::Config;
 use clap::{Arg, Command};
 use walkdir::WalkDir;
@@ -106,10 +106,9 @@ fn main() {
         std::process::exit(0);
     }
 
-    for file in WalkDir::new(working_dir).into_iter().filter_map(|e| e.ok()) {
-        // println!("{}", OsStr::to_str(file.file_name()).unwrap());
-        // check_file(&repo, &working_dir, &file.path(), &ac, &porcelain);
-    }
+    checker.check_dir(&working_dir);
+
+
     // println!("Hello, world!");
 }
 
