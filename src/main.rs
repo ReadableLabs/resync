@@ -77,7 +77,7 @@ fn main() {
         }
     }
 
-    remove_file(&temp_file).unwrap();
+    remove_file(&temp_file).unwrap(); // check if result is none or not
 
     println!("Searching for out of sync comments...");
 
