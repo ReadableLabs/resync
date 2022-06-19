@@ -3,15 +3,18 @@ pub mod parsers;
 pub mod tools;
 pub mod sync;
 pub mod config;
+pub mod formatters;
 
 use std::path::Path;
 use aho_corasick::AhoCorasick;
 use resync::check::check_file;
+use resync::config::Config;
 use clap::{Arg, Command};
 use walkdir::WalkDir;
 use git2::Repository;
 use std::env::current_dir;
 use std::fs::{File, remove_file};
+use dirs;
 
 fn main() {
     let matches = Command::new("Resync")
@@ -55,6 +58,9 @@ fn main() {
         Some(value) => Path::new(value),
         None => current_dir,
     };
+
+    let config = Config {};
+    let db = config.open_db();
 
     let repo = Repository::open(working_dir).expect("Failed to open repository");
     let porcelain = matches.is_present("porcelain");

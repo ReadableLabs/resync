@@ -4,7 +4,7 @@ use crate::parsers::{
     types::SymbolSpan,
     rust::
     visitor::RsVisitor,
-    base::Parser};
+    Parser};
 use syn::visit::Visit;
 
 pub struct RsParser;

@@ -2,15 +2,23 @@ use aho_corasick::AhoCorasick;
 use pathdiff::diff_paths;
 
 use crate::tools::{get_latest_line, print_symbol, check_control, unix_time_diff};
-use crate::parsers::base::get_parser;
+use crate::parsers::get_parser;
 use crate::info::{get_line_info, get_commit_diff};
 use std::ffi::OsStr;
 use std::path::Path;
+use std::fs::metadata;
 use std::fs::{read_to_string};
-use std::time::SystemTime;
+use std::time::{SystemTime, UNIX_EPOCH};
 use git2::{Repository, Oid};
 
 pub fn check_file(repo: &Repository, working_dir: &Path, file: &Path, ac: &AhoCorasick, porcelain: &bool) {
+    let last_edit = std::fs::metadata(file)
+        .unwrap()
+        .modified()
+        .unwrap()
+        .duration_since(UNIX_EPOCH)
+        .unwrap().as_millis();
+
     let patterns = [".git", ".swp", "node_modules", "target"]; // TODO: add global pattern list, or read gitignore
     // let f = file.path().to_str().unwrap();
     if ac.is_match(file.to_str().unwrap()) {
@@ -55,6 +63,7 @@ pub fn check_file(repo: &Repository, working_dir: &Path, file: &Path, ac: &AhoCo
             return;
         }
     };
+
     let all_funs = match parser.parse(&read) {
         Ok(funs) => funs,
         Err(e) => {
@@ -94,6 +103,7 @@ pub fn check_file(repo: &Repository, working_dir: &Path, file: &Path, ac: &AhoCo
             println!("{}:{}:{}", file.display(), line, character);
             print_symbol(&function, &comment, &file, ext);
         }
+
         else {
             // println!("{}\n{} commits since update\n{}:{}:{}\n{}\n{}", time_diff, commit_diff, file.display(), line, character, comment.start.line, comment.end.line);
             let file_name = file.file_name().and_then(OsStr::to_str).unwrap();
