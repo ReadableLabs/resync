@@ -4,11 +4,11 @@ pub mod rust;
 use crate::parsers::{
     rust::parser::RsParser,
     types::SymbolSpan};
-use std::vec::Vec;
+use std::{vec::Vec, path::PathBuf};
 use aho_corasick::AhoCorasick;
 use std::path::Path;
 
-pub fn get_parser(file: &Path, ignore_patterns: &[&str]) -> Option<Box<dyn Parser>> {
+pub fn get_parser(file: &PathBuf, ignore_patterns: &[&str]) -> Option<Box<dyn Parser>> {
     let ac = AhoCorasick::new(ignore_patterns);
     let f = file.to_str().unwrap();
 

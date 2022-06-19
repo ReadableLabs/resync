@@ -7,7 +7,7 @@ pub mod formatters;
 
 use std::path::Path;
 use aho_corasick::AhoCorasick;
-use resync::check::check_file;
+use resync::check::{check_file, Checker};
 use resync::config::Config;
 use clap::{Arg, Command};
 use walkdir::WalkDir;
@@ -93,19 +93,22 @@ fn main() {
 
     let ac = AhoCorasick::new(&patterns);
 
+    let checker = Checker::new(repo, working_dir.to_path_buf(), ac, porcelain);
+
     if matches.is_present("check-file") {
         let file = matches.value_of("check-file").unwrap(); // file is relative path
         // get parent dir from working dir before doing this
         let full_path = Path::join(working_dir, file);
 
-        check_file(&repo, &working_dir, &full_path, &ac, &porcelain);
+        checker.check_file(full_path);
+        // check_file(&repo, &working_dir, &full_path, &ac, &porcelain);
 
         std::process::exit(0);
     }
 
     for file in WalkDir::new(working_dir).into_iter().filter_map(|e| e.ok()) {
         // println!("{}", OsStr::to_str(file.file_name()).unwrap());
-        check_file(&repo, &working_dir, &file.path(), &ac, &porcelain);
+        // check_file(&repo, &working_dir, &file.path(), &ac, &porcelain);
     }
     // println!("Hello, world!");
 }
