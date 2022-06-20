@@ -45,10 +45,16 @@ impl Checker {
             .duration_since(UNIX_EPOCH)
             .unwrap().as_millis();
         
-        let file_name = file.file_name().and_then(OsStr::to_str).unwrap();
-        let last_checked = match self.db.get::<u128>(format!("{}:time", &file_name).as_str()) {
-            Some(time) => time,
-            None => 0
+        // let file_name = file.file_name().and_then(OsStr::to_str).unwrap();
+        // println!("{}", &file.display());
+
+        let key = format!("{}:time", file.display().to_string());
+
+        let last_checked = match self.db.get::<u128>(&key) {
+            Some(time) => {
+                time
+            },
+            None => 0,
         };
 
         if last_edit > last_checked {
@@ -61,7 +67,6 @@ impl Checker {
     /// returns sync info
     pub fn check_file(&mut self, file: PathBuf) {
         // failed to get last edit, just continue
-
         let patterns = [".git", ".swp", "node_modules", "target"]; // TODO: add global pattern list, or read gitignore
         // let f = file.path().to_str().unwrap();
         if self.ac.is_match(file.to_str().unwrap()) {
@@ -79,12 +84,18 @@ impl Checker {
 
         let formatter = get_formatter(&self.porcelain);
 
-        let file_name = file.file_name().and_then(OsStr::to_str).unwrap();
-
         let relative_path = diff_paths(&file, self.working_dir.as_path()).unwrap();
 
+        let parser = match get_parser(&file, &patterns) {
+            Some(parser) => parser,
+            _ => {
+                return;
+            }
+        };
+
+
         if !self.should_check(&file) {
-            let symbols = match self.db.get::<Vec<SyncInfo>>(format!("{}:info", file_name).as_str()) {
+            let symbols = match self.db.get::<Vec<SyncInfo>>(&format!("{}:info", &file.display())) {
                 Some(symbol) => symbol,
                 None => {
                     return;
@@ -92,8 +103,10 @@ impl Checker {
             };
 
             for symbol in symbols {
-                formatter.output(&symbol.function, &symbol.comment, &relative_path, &ext, &symbol.time_diff, &symbol.commit_diff);
+                formatter.output(&symbol.function, &symbol.comment, &file, &ext, &symbol.time_diff, &symbol.commit_diff);
             }
+
+            return;
 
             // add for loop here as it will be stored in a vec
 
@@ -107,17 +120,10 @@ impl Checker {
         // if there is already something, get the file and print it
         // else, continue
 
-        let parser = match get_parser(&file, &patterns) {
-            Some(parser) => parser,
-            _ => {
-                return;
-            }
-        };
-
         let read = match read_to_string(&file) {
             Ok(read) => read,
             Err(e) => {
-                println!("{:#?}", file);
+                println!("{:#?}", file.display());
                 println!("{}", e);
                 println!("Failed to read file {}, skipping", file.display());
                 return;
@@ -188,12 +194,19 @@ impl Checker {
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_millis();
+        
+        let key = format!("{}:time", file.display().to_string());
+        self.db.set::<u128>(&key, &current_time).expect("Failed to set last time");
 
-        self.db.set::<u128>(format!("{}:time", &file_name).as_str(), &current_time).expect("Failed to set last time");
-        self.db.set::<Vec<SyncInfo>>(format!("{}:info", &file_name).as_str(), &all_symbols).expect("Failed to set last time");
+        if all_symbols.is_empty() {
+            return;
+        }
+
+        self.db.set::<Vec<SyncInfo>>(&format!("{}:info", &file.display()), &all_symbols).expect("Failed to set last time");
+
     }
 
-    pub fn check_dir(&mut self, dir: &Path) {
+    pub fn check_working_dir(&mut self) {
         for file in WalkDir::new(&self.working_dir).into_iter().filter_map(|e| e.ok()) {
             self.check_file(file.path().to_path_buf());
         }

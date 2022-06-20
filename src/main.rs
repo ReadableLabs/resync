@@ -106,7 +106,7 @@ fn main() {
         std::process::exit(0);
     }
 
-    checker.check_dir(&working_dir);
+    checker.check_working_dir();
 
 
     // println!("Hello, world!");
