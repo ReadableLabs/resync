@@ -840,6 +840,7 @@ dependencies = [
  "pickledb",
  "proc-macro2",
  "quote",
+ "serde",
  "syn",
  "walkdir",
 ]

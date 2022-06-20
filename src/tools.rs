@@ -50,7 +50,7 @@ pub fn check_control(blame_info: &HashMap<usize, LineInfo>, symbol: &SymbolSpan)
     return false;
 }
 
-pub fn print_symbol(function: &SymbolSpan, comment: &SymbolSpan, file: &Path, language: &str) {
+pub fn print_symbol(function: &SymbolSpan, comment: &SymbolSpan, file: &Path, language: &str, time_diff: &String, commit_diff: &usize) {
     let function_start = function.start.line;
     let function_end = function.end.line;
 

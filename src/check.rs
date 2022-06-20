@@ -7,19 +7,20 @@ use crate::parsers::get_parser;
 use crate::info::{get_line_info, get_commit_diff};
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
-use std::fs::metadata;
 use std::fs::{read_to_string};
 use std::time::{SystemTime, UNIX_EPOCH};
 use git2::{Repository, Oid};
 use crate::parsers::types::SymbolSpan;
+use pickledb::PickleDb;
+use serde::{Serialize, Deserialize};
+use crate::formatters::get_formatter;
 
 /// All the flags resync saves for an out of sync comment
+#[derive(Serialize, Deserialize)]
 pub struct SyncInfo {
     last_edit: u64,
     time_diff: String,
     commit_diff: usize,
-    line: usize,
-    character: usize,
     function: SymbolSpan,
     comment: SymbolSpan
 }
@@ -28,21 +29,40 @@ pub struct Checker {
     repo: Repository,
     working_dir: PathBuf,
     ac: AhoCorasick,
-    porcelain: bool
+    porcelain: bool,
+    db: PickleDb
 }
 
 impl Checker {
-    pub fn new(repo: Repository, working_dir: PathBuf, ac: AhoCorasick, porcelain: bool) -> Self {
-        Self { repo, working_dir, ac, porcelain }
+    pub fn new(repo: Repository, working_dir: PathBuf, ac: AhoCorasick, porcelain: bool, db: PickleDb) -> Self {
+        Self { repo, working_dir, ac, porcelain, db }
     }
 
+    fn should_check(&self, file: &PathBuf) -> bool {
+        let last_edit = std::fs::metadata(&file)
+            .unwrap()
+            .modified()
+            .unwrap()
+            .duration_since(UNIX_EPOCH)
+            .unwrap().as_millis();
+        
+        let file_name = file.file_name().and_then(OsStr::to_str).unwrap();
+        let last_checked = match self.db.get::<u128>(format!("{}:time", file_name).as_str()) {
+            Some(time) => time,
+            None => 0
+        };
+
+        if last_edit > last_checked {
+            return true;
+        }
+
+        return false;
+    }
+
+    /// returns sync info
     pub fn check_file(&self, file: PathBuf) {
-        // let last_edit = std::fs::metadata(file)
-        //     .unwrap()
-        //     .modified()
-        //     .unwrap()
-        //     .duration_since(UNIX_EPOCH)
-        //     .unwrap().as_millis();
+        // failed to get last edit, just continue
+
 
         let patterns = [".git", ".swp", "node_modules", "target"]; // TODO: add global pattern list, or read gitignore
         // let f = file.path().to_str().unwrap();
@@ -57,6 +77,27 @@ impl Checker {
                 return;
             }
         };
+
+
+        let formatter = get_formatter(&self.porcelain);
+
+        let file_name = file.file_name().and_then(OsStr::to_str).unwrap();
+
+        let relative_path = diff_paths(&file, self.working_dir.as_path()).unwrap();
+        if !self.should_check(&file) {
+            let symbol = match self.db.get::<SyncInfo>(format!("{}:info", file_name).as_str()) {
+                Some(symbol) => symbol,
+                None => {
+                    return;
+                }
+            };
+
+            formatter.output(&symbol.function, &symbol.comment, &relative_path, &ext, &symbol.time_diff, &symbol.commit_diff);
+
+            // println!("{}\n{}\n{}\n{}\n{}\n{}", symbol.time_diff, symbol.commit_diff, symbol.relative_path.display(), file_name, comment.start.line, comment.end.line);
+            // time diff, commit_diff, relative path, file name, comment start, comment end
+        }
+
 
         // if there is already something, get the file and print it
         // else, continue
@@ -78,7 +119,6 @@ impl Checker {
             }
         };
 
-        let relative_path = diff_paths(&file, self.working_dir.as_path()).unwrap();
 
         // let repo = Repository::open(working_dir).expect("Failed to open repo");
 
@@ -127,17 +167,19 @@ impl Checker {
             let line = function.start.line - 1;
             let character = function.start.character;
 
-            if self.porcelain != true {
-                println!("{}", time_diff);
-                println!("{} commits since update", commit_diff); // change red green or yellow text changed a lot, little, or changed
-                println!("{}:{}:{}", file.display(), line, character);
-                print_symbol(&function, &comment, &file, ext);
-            }
+            formatter.output(&function, &comment, &file, &ext, &time_diff, &commit_diff);
 
-            else {
-                let file_name = file.file_name().and_then(OsStr::to_str).unwrap();
-                println!("{}\n{}\n{}\n{}\n{}\n{}", time_diff, commit_diff, relative_path.display(), file_name, comment.start.line, comment.end.line);
-            }
+            // if self.porcelain != true {
+            //     println!("{}", time_diff);
+            //     println!("{} commits since update", commit_diff); // change red green or yellow text changed a lot, little, or changed
+            //     println!("{}:{}:{}", file.display(), line, character);
+            //     print_symbol(&function, &comment, &file, ext, &time_diff, &commit_diff);
+            // }
+
+            // else {
+            //     let file_name = file.file_name().and_then(OsStr::to_str).unwrap();
+            //     println!("{}\n{}\n{}\n{}\n{}\n{}", time_diff, commit_diff, relative_path.display(), file_name, comment.start.line, comment.end.line);
+            // }
         }
     }
 
