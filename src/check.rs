@@ -2,7 +2,7 @@ use aho_corasick::AhoCorasick;
 use pathdiff::diff_paths;
 use walkdir::WalkDir;
 
-use crate::tools::{get_latest_line, print_symbol, check_control, unix_time_diff};
+use crate::tools::{get_latest_line, check_control, unix_time_diff};
 use crate::parsers::get_parser;
 use crate::info::{get_line_info, get_commit_diff};
 use std::ffi::OsStr;
@@ -84,14 +84,19 @@ impl Checker {
         let relative_path = diff_paths(&file, self.working_dir.as_path()).unwrap();
 
         if !self.should_check(&file) {
-            let symbol = match self.db.get::<SyncInfo>(format!("{}:info", file_name).as_str()) {
+            let symbols = match self.db.get::<Vec<SyncInfo>>(format!("{}:info", file_name).as_str()) {
                 Some(symbol) => symbol,
                 None => {
                     return;
                 }
             };
 
-            formatter.output(&symbol.function, &symbol.comment, &relative_path, &ext, &symbol.time_diff, &symbol.commit_diff);
+            for symbol in symbols {
+                formatter.output(&symbol.function, &symbol.comment, &relative_path, &ext, &symbol.time_diff, &symbol.commit_diff);
+            }
+
+            // add for loop here as it will be stored in a vec
+
             // ok
 
             // println!("{}\n{}\n{}\n{}\n{}\n{}", symbol.time_diff, symbol.commit_diff, symbol.relative_path.display(), file_name, comment.start.line, comment.end.line);
@@ -142,6 +147,8 @@ impl Checker {
             }
         };
 
+        let mut all_symbols = Vec::<SyncInfo>::new();
+
         // make a module which checks all of these, checkall, which you can implement
         for (comment, function) in all_funs {
             let comment_idx = get_latest_line(&blame_lines, &comment);
@@ -165,10 +172,6 @@ impl Checker {
             let commit_diff = get_commit_diff(&self.repo, &Oid::from_str(&comment_info.commit).unwrap()).expect("Failed to get commit diff");
 
             formatter.output(&function, &comment, &file, &ext, &time_diff, &commit_diff);
-            let current_time = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap()
-                .as_millis();
 
             let symbol = SyncInfo {
                 function,
@@ -176,9 +179,18 @@ impl Checker {
                 commit_diff,
                 time_diff
             };
-            self.db.set::<u128>(format!("{}:time", &file_name).as_str(), &current_time).expect("Failed to set last time");
-            self.db.set::<SyncInfo>(format!("{}:info", &file_name).as_str(), &symbol).expect("Failed to set last time");
+
+            all_symbols.push(symbol);
+
         }
+
+        let current_time = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_millis();
+
+        self.db.set::<u128>(format!("{}:time", &file_name).as_str(), &current_time).expect("Failed to set last time");
+        self.db.set::<Vec<SyncInfo>>(format!("{}:info", &file_name).as_str(), &all_symbols).expect("Failed to set last time");
     }
 
     pub fn check_dir(&mut self, dir: &Path) {
