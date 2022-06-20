@@ -18,7 +18,6 @@ use crate::formatters::get_formatter;
 /// All the flags resync saves for an out of sync comment
 #[derive(Serialize, Deserialize)]
 pub struct SyncInfo {
-    last_edit: u64,
     time_diff: String,
     commit_diff: usize,
     function: SymbolSpan,
@@ -47,7 +46,7 @@ impl Checker {
             .unwrap().as_millis();
         
         let file_name = file.file_name().and_then(OsStr::to_str).unwrap();
-        let last_checked = match self.db.get::<u128>(format!("{}:time", file_name).as_str()) {
+        let last_checked = match self.db.get::<u128>(format!("{}:time", &file_name).as_str()) {
             Some(time) => time,
             None => 0
         };
@@ -60,9 +59,8 @@ impl Checker {
     }
 
     /// returns sync info
-    pub fn check_file(&self, file: PathBuf) {
+    pub fn check_file(&mut self, file: PathBuf) {
         // failed to get last edit, just continue
-
 
         let patterns = [".git", ".swp", "node_modules", "target"]; // TODO: add global pattern list, or read gitignore
         // let f = file.path().to_str().unwrap();
@@ -84,6 +82,7 @@ impl Checker {
         let file_name = file.file_name().and_then(OsStr::to_str).unwrap();
 
         let relative_path = diff_paths(&file, self.working_dir.as_path()).unwrap();
+
         if !self.should_check(&file) {
             let symbol = match self.db.get::<SyncInfo>(format!("{}:info", file_name).as_str()) {
                 Some(symbol) => symbol,
@@ -93,6 +92,7 @@ impl Checker {
             };
 
             formatter.output(&symbol.function, &symbol.comment, &relative_path, &ext, &symbol.time_diff, &symbol.commit_diff);
+            // ok
 
             // println!("{}\n{}\n{}\n{}\n{}\n{}", symbol.time_diff, symbol.commit_diff, symbol.relative_path.display(), file_name, comment.start.line, comment.end.line);
             // time diff, commit_diff, relative path, file name, comment start, comment end
@@ -164,26 +164,24 @@ impl Checker {
             let time_diff = unix_time_diff(current_time.into(), comment_info.time.into());
             let commit_diff = get_commit_diff(&self.repo, &Oid::from_str(&comment_info.commit).unwrap()).expect("Failed to get commit diff");
 
-            let line = function.start.line - 1;
-            let character = function.start.character;
-
             formatter.output(&function, &comment, &file, &ext, &time_diff, &commit_diff);
+            let current_time = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_millis();
 
-            // if self.porcelain != true {
-            //     println!("{}", time_diff);
-            //     println!("{} commits since update", commit_diff); // change red green or yellow text changed a lot, little, or changed
-            //     println!("{}:{}:{}", file.display(), line, character);
-            //     print_symbol(&function, &comment, &file, ext, &time_diff, &commit_diff);
-            // }
-
-            // else {
-            //     let file_name = file.file_name().and_then(OsStr::to_str).unwrap();
-            //     println!("{}\n{}\n{}\n{}\n{}\n{}", time_diff, commit_diff, relative_path.display(), file_name, comment.start.line, comment.end.line);
-            // }
+            let symbol = SyncInfo {
+                function,
+                comment,
+                commit_diff,
+                time_diff
+            };
+            self.db.set::<u128>(format!("{}:time", &file_name).as_str(), &current_time).expect("Failed to set last time");
+            self.db.set::<SyncInfo>(format!("{}:info", &file_name).as_str(), &symbol).expect("Failed to set last time");
         }
     }
 
-    pub fn check_dir(&self, dir: &Path) {
+    pub fn check_dir(&mut self, dir: &Path) {
         for file in WalkDir::new(&self.working_dir).into_iter().filter_map(|e| e.ok()) {
             self.check_file(file.path().to_path_buf());
         }

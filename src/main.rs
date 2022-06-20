@@ -93,7 +93,7 @@ fn main() {
 
     let ac = AhoCorasick::new(&patterns);
 
-    let checker = Checker::new(repo, working_dir.to_path_buf(), ac, porcelain, db);
+    let mut checker = Checker::new(repo, working_dir.to_path_buf(), ac, porcelain, db);
 
     if matches.is_present("check-file") {
         let file = matches.value_of("check-file").unwrap(); // file is relative path
