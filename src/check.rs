@@ -123,9 +123,12 @@ impl Checker {
         let read = match read_to_string(&file) {
             Ok(read) => read,
             Err(e) => {
-                println!("{:#?}", file.display());
-                println!("{}", e);
-                println!("Failed to read file {}, skipping", file.display());
+                if self.porcelain == false {
+
+                    println!("{:#?}", file.display());
+                    println!("{}", e);
+                    println!("Failed to read file {}, skipping", file.display());
+                }
                 return;
             }
         };
@@ -148,7 +151,9 @@ impl Checker {
         let all_funs = match parser.parse(&read) {
             Ok(funs) => funs,
             Err(e) => {
-                println!("Failed to parse file. Error {}. Skipping", e);
+                if self.porcelain == false {
+                    println!("Failed to parse file. Error {}. Skipping", e);
+                }
                 return;
             }
         };

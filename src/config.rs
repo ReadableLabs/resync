@@ -11,7 +11,6 @@ impl Config {
     /// gets the path and creates if not exist
     pub fn get_and_create(&self) -> Result<PathBuf> {
         let dir = dirs::config_dir().expect("Failed to get config dir").join("resync/");
-        println!("{}", dir.display());
         if !dir.exists() {
             fs::create_dir(&dir).expect("Failed to create config directory");
         }

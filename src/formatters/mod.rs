@@ -1,11 +1,13 @@
 pub mod terminal;
 pub mod porcelain;
+pub mod single_line;
 
 use std::path::PathBuf;
 
 use crate::{formatters::{
     porcelain::PorcelainFormatter,
-    terminal::TerminalFormatter
+    terminal::TerminalFormatter,
+    single_line::SingleLineFormatter
 }, parsers::types::SymbolSpan};
 
 pub trait Formatter {
@@ -14,10 +16,10 @@ pub trait Formatter {
 
 pub fn get_formatter(porcelain: &bool) -> Box< dyn Formatter> {
     if *porcelain {
-        Box::new(porcelain::PorcelainFormatter {})
+        Box::new(SingleLineFormatter {})
     }
 
     else {
-        Box::new(terminal::TerminalFormatter {})
+        Box::new(TerminalFormatter {})
     }
 }
