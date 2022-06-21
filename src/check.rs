@@ -148,7 +148,7 @@ impl Checker {
             }
         };
 
-        let all_funs = match parser.parse(&read) {
+        let all_funs = match parser.parse(&file) {
             Ok(funs) => funs,
             Err(e) => {
                 if self.porcelain == false {

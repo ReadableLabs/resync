@@ -1,4 +1,5 @@
-use std::str;
+use std::fs::read_to_string;
+use std::{str, path::PathBuf};
 use std::vec::Vec;
 use crate::parsers::{
     types::SymbolSpan,
@@ -10,8 +11,14 @@ use syn::visit::Visit;
 pub struct RsParser;
 
 impl Parser for RsParser {
-    fn parse(&self, file_input: &str) -> Result<Vec<(SymbolSpan, SymbolSpan)>, &str> {
-        let ast = match syn::parse_file(file_input) {
+    fn parse(&self, file: &PathBuf) -> Result<Vec<(SymbolSpan, SymbolSpan)>, &str> {
+        let file_input = match read_to_string(&file) {
+            Ok(read) => read,
+            Err(e) => {
+                return Err("Failed to read file");
+            }
+        };
+        let ast = match syn::parse_file(&file_input) {
             Ok(ast) => ast,
             Err(_) => {
                 return Err("Failed to parse file");

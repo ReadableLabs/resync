@@ -1,5 +1,6 @@
 pub mod types;
 pub mod rust;
+pub mod javascript;
 
 use crate::parsers::{
     rust::parser::RsParser,
@@ -41,5 +42,5 @@ pub fn get_parser(file: &PathBuf, ignore_patterns: &[&str]) -> Option<Box<dyn Pa
 }
 
 pub trait Parser {
-    fn parse(&self, file_input: &str) -> Result<Vec<(SymbolSpan, SymbolSpan)>, &str>;
+    fn parse(&self, file: &PathBuf) -> Result<Vec<(SymbolSpan, SymbolSpan)>, &str>;
 }
