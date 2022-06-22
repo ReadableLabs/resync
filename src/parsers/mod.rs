@@ -4,6 +4,7 @@ pub mod javascript;
 
 use crate::parsers::{
     rust::parser::RsParser,
+    javascript::parser::JsParser,
     types::SymbolSpan};
 use std::{vec::Vec, path::PathBuf};
 use aho_corasick::AhoCorasick;
@@ -26,9 +27,10 @@ pub fn get_parser(file: &PathBuf, ignore_patterns: &[&str]) -> Option<Box<dyn Pa
         }
     };
 
+    // just use ecma instead of js or ts or any of these, and do the check in the file
     match extension {
+        "js" => Some(Box::new(JsParser {})),
         /*
-        "js" => Box::new(JsParser {}),
         "jsx" => Box::new(JsParser {}),
         "ts" => Box::new(TsParser {}),
         "tsx" => Box::new(TsParser {}),

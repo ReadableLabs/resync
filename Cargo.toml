@@ -17,6 +17,9 @@ pathdiff = "0.2.1"
 aho-corasick = "0.7.18"
 swc_ecma_parser = "0.105.6"
 swc_common = "0.18.9"
+swc_ecma_ast = "0.79.0"
+dprint-swc-ext = { version = "0.2.0", features = ["view"] }
+deno_ast = { version = "0.16.0", features = ["visit"] }
 walkdir = "2.3.2"
 syn = { version = "1.0.91", features = ["full", "extra-traits", "visit", "parsing", "printing"]}
 proc-macro2 = { version = "1.0.37", features = ["span-locations"] }
