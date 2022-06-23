@@ -41,7 +41,7 @@ cargo install --path .
 - [ ] Kotlin
 - [ ] Java
 
-If you want to support a new language, view the [docs]() on how to do so.
+If you want to support a new language, view the [docs](./docs/parsers.md) on how to do so.
 
 ### FAQ
 
