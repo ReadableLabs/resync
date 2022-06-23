@@ -1,9 +1,9 @@
-use std::{path::PathBuf, fs::read_to_string, ops::Deref};
+use std::{path::PathBuf, fs::read_to_string, ops::Deref, borrow::Borrow};
 
 use crate::parsers::Parser;
 use dprint_swc_ecma_ast_view::{with_ast_view_for_module, ClassDecl};
-use dprint_swc_ext::view::{ProgramInfo, Comments};
-use swc_common::{self, sync::Lrc, SourceMap, Spanned, EqIgnoreSpan};
+use dprint_swc_ext::view::{ProgramInfo, Comments, ModuleDecl};
+use swc_common::{self, sync::Lrc, SourceMap, Spanned, EqIgnoreSpan, comments::SingleThreadedComments};
 use swc_ecma_ast::{ModuleItem, Program};
 use swc_ecma_parser::{lexer::Lexer, Capturing, Parser as ECMAParser, StringInput, Syntax, EsConfig, token::TokenAndSpan};
 
@@ -17,17 +17,44 @@ impl Parser for JsParser {
         // first 
         let text = read_to_string(file).expect("Failed to read file");
 
-        // let text_info = SourceTextInfo::new(text.into());
-        // let parsed_source = parse_module(ParseParams {
-        //     specifier: "file:///my_file.js".to_string(),
-        //     media_type: JavaScript,
-        //     text_info: text_info.clone(),
-        //     capture_tokens: true,
-        //     maybe_syntax: None,
-        //     scope_analysis: false,
-        // }).expect("Should parse");
+        // let comments = SingleThreadedComments::default();
 
-        // let comments = parsed_source.comments().as_single_threaded().take_all();
+        // let cm: Lrc<SourceMap> = Default::default();
+        // let fm = cm.load_file(file.as_path()).expect("Failed to load file");
+        // let lexer = Lexer::new(
+        //     Syntax::Es(Default::default()),
+        //     Default::default(),
+        //     StringInput::from(&*fm),
+        //     Some(&comments)
+        // );
+
+        // let mut parser = swc_ecma_parser::Parser::new_from(lexer);
+
+        // let module = parser.parse_module().expect("Failed to parse module");
+        // println!("{}", parser.input());
+
+        // for i in module.body.iter() {
+        // }
+
+
+
+        // use rslint
+        let text_info = SourceTextInfo::new(text.into());
+        let parsed_source = parse_module(ParseParams {
+            specifier: "file:///my_file.js".to_string(),
+            media_type: JavaScript,
+            text_info: text_info.clone(),
+            capture_tokens: true,
+            maybe_syntax: None,
+            scope_analysis: false,
+        }).expect("Should parse");
+
+        let program = parsed_source.program();
+
+        // let module = program.module().clone();
+
+
+        // let (leading_comments, trailing_comments) = parsed_source.comments().as_single_threaded().take_all();
         // // let program: swc_ecmascript::ast::Program = Program::Module(parsed_source.module().to_owned());
         // let tokens = parsed_source.tokens();
 
@@ -56,11 +83,11 @@ impl Parser for JsParser {
 
         // let i = parsed_source.tokens().body.iter();
 
-        let i = parsed_source.comments().get_vec();
+        // let i = parsed_source.comments().get_vec();
 
-        for item in i {
-            println!("{:#?}", item);
-        }
+        // for item in i {
+        //     println!("{:#?}", item);
+        // }
         // let source_text = Arc::new(text.as_str());
 
         // let text_info = SourceTextInfo::new(source_text);
