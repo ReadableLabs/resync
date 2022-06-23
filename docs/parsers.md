@@ -21,4 +21,4 @@ If you need an example of a parser which implements `Parser`, check `parsers/rus
 ### FAQ
 
 - Which library should I use for parsing?
-  - Whichever one is easiest (and preferably lightweight) for parsing said language. The rust parser uses syn but for typescript you could use swc.
+  - Whichever one is easiest (and preferably lightweight) for parsing said language. The rust parser uses syn but for typescript you could use rslib.
