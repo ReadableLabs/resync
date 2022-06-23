@@ -18,6 +18,8 @@ aho-corasick = "0.7.18"
 swc_ecma_parser = "0.105.6"
 swc_common = "0.18.9"
 swc_ecma_ast = "0.79.0"
+swc_ecmascript = "0.165.0"
+dprint-swc-ecma-ast-view = "0.56.0"
 dprint-swc-ext = { version = "0.2.0", features = ["view"] }
 deno_ast = { version = "0.16.0", features = ["visit"] }
 walkdir = "2.3.2"

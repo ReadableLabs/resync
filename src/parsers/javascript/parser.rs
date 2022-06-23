@@ -1,6 +1,8 @@
-use std::{path::PathBuf, fs::read_to_string};
+use std::{path::PathBuf, fs::read_to_string, ops::Deref};
 
 use crate::parsers::Parser;
+use dprint_swc_ecma_ast_view::{with_ast_view_for_module, ClassDecl};
+use dprint_swc_ext::view::{ProgramInfo, Comments};
 use swc_common::{self, sync::Lrc, SourceMap, Spanned, EqIgnoreSpan};
 use swc_ecma_ast::{ModuleItem, Program};
 use swc_ecma_parser::{lexer::Lexer, Capturing, Parser as ECMAParser, StringInput, Syntax, EsConfig, token::TokenAndSpan};
@@ -12,18 +14,43 @@ pub struct JsParser;
 
 impl Parser for JsParser {
     fn parse(&self, file: &PathBuf) -> Result<Vec<(crate::parsers::types::SymbolSpan, crate::parsers::types::SymbolSpan)>, &str> {
+        // first 
         let text = read_to_string(file).expect("Failed to read file");
-        let text_info = SourceTextInfo::new(text.into());
-        let parsed_source = parse_module(ParseParams {
-            specifier: "file:///my_file.js".to_string(),
-            media_type: JavaScript,
-            text_info,
-            capture_tokens: true,
-            maybe_syntax: None,
-            scope_analysis: false,
-        }).expect("Should parse");
 
-        let comments = parsed_source.comments();
+        // let text_info = SourceTextInfo::new(text.into());
+        // let parsed_source = parse_module(ParseParams {
+        //     specifier: "file:///my_file.js".to_string(),
+        //     media_type: JavaScript,
+        //     text_info: text_info.clone(),
+        //     capture_tokens: true,
+        //     maybe_syntax: None,
+        //     scope_analysis: false,
+        // }).expect("Should parse");
+
+        // let comments = parsed_source.comments().as_single_threaded().take_all();
+        // // let program: swc_ecmascript::ast::Program = Program::Module(parsed_source.module().to_owned());
+        // let tokens = parsed_source.tokens();
+
+        // let program_ref: dprint_swc_ext::view::ProgramRef = dprint_swc_ext::view::ProgramRef::Module(parsed_source.module());
+
+        // let program_info = ProgramInfo {
+        //     program: program_ref,
+        //     text_info: Some(&text_info),
+        //     comments: None,
+        //     // comments: Some(&comments),
+        //     tokens: Some(&tokens)
+        // };
+
+        // dprint_swc_ecma_ast_view::with_ast_view(program_info, |program| {
+        //     for child in program.children() {
+        //         println!("child")
+        //     }
+        // });
+
+
+
+        // dprint_swc_ecma_ast_view::with_ast_view(program_info, |program| {
+        // });
 
         // println!("{:#?}", comments.leading_map());
 
