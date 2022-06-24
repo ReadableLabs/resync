@@ -57,11 +57,5 @@ If you want to support a new language, view the [docs](./docs/parsers.md) on how
 - Use [cursive](https://github.com/gyscos/cursive) to make a terminal GUI for resync
 - use optional dependencies if you only want to compile for a few languages
 - Allow resync to be used on the master branch, without creating resync branch (maybe)
-- Make async for faster querying. Super fast idea: first get all files which might be good to check, load them into memory one at a time (non async). Then go through them in batches of 4
 - add tests to mock extension
-
-## Layout
-
-file_info -> gets file info, either from db or through file if db isn't cached
-formatters -> formats the file in a certain way, printing it out
-config -> class responsible for providing folders + db path
+- Add debug flag which creates a new database by default instead of opening one

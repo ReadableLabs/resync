@@ -1,7 +1,7 @@
 use std::{path::PathBuf, fs::read_to_string, ops::Deref, borrow::Borrow, any::{Any, type_name}};
 use rslint_parser::{ast::BracketExpr, parse_text, AstNode, SyntaxToken, SyntaxNode, util, SyntaxNodeExt, SyntaxKind, Syntax, JsLanguage, SyntaxNodeChildren, JsNum};
 
-use crate::parsers::{Parser, types::SymbolSpan};
+use crate::parsers::{Parser, types::{SymbolSpan, LineSpan}};
 
 pub struct JsParser;
 
@@ -13,7 +13,7 @@ impl Parser for JsParser {
 
         let nodes = parse.syntax().children().into_iter();
 
-        let symbols: Vec<SymbolSpan> = Vec::new();
+        let mut symbols: Vec<(SymbolSpan, SymbolSpan)> = Vec::new();
 
         for node in nodes {
             let mut parent = node;
@@ -23,8 +23,26 @@ impl Parser for JsParser {
             let comments = tokens.iter().filter(|token| token.kind() == SyntaxKind::COMMENT);
 
             for comment in comments {
-                println!("{:#?}", comment.parent().text_range().start());
+                let range = comment.text_range();
+
+                let parent_range = comment.parent().text_range();
+
+                // kind of hacky, can't add one after into
+                let mut fun_start: usize = range.end().into();
+                fun_start += 1;
+
+                let fun_end: usize = parent_range.end().into();
+
+                // can be usize
+                let comment_start: usize = range.start().into();
+                let comment_end: usize = range.end().into();
+
+                println!("{:#?}", to_symbol_span(&text, comment_start, comment_end));
+                println!("{:#?}", to_symbol_span(&text, fun_start, fun_end));
+
+                symbols.push((to_symbol_span(&text, comment_start, comment_end), to_symbol_span(&text, fun_start, fun_end)));
             }
+
 
             // if !parent.contains_comments() {
             //     continue;
@@ -57,6 +75,35 @@ impl Parser for JsParser {
             //     // }
             // }
         }
-        panic!("Not implemented");
+
+        return Ok(symbols);
+    }
+}
+
+fn to_line_span(text: &str, offset: usize) -> LineSpan {
+    let mut char_idx: usize = 0;
+    let mut line_idx: usize = 0;
+
+    for (idx, char) in text.chars().enumerate() {
+        if idx == offset {
+            return LineSpan {
+                character: char_idx,
+                line: line_idx
+            }
+        }
+        char_idx += 1;
+        if char == '\n' {
+            char_idx = 0;
+            line_idx += 1;
+        }
+    }
+
+    panic!("Failed to get line span");
+}
+
+fn to_symbol_span(text: &str, start: usize, end: usize) -> SymbolSpan {
+    SymbolSpan {
+        start: to_line_span(&text, start),
+        end: to_line_span(&text, end)
     }
 }
