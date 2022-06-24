@@ -13,22 +13,36 @@ impl Parser for JsParser {
 
         let nodes = parse.syntax().children().into_iter();
 
+        let symbols: Vec<SymbolSpan> = Vec::new();
+
         for node in nodes {
-            let parent = node;
+            let mut parent = node;
 
-            while parent.children().into_iter().count() {
-                let child = parent.children();
-                // println!("{}", child);
+            let tokens = parent.tokens();
+
+            let comments = tokens.iter().filter(|token| token.kind() == SyntaxKind::COMMENT);
+
+            for comment in comments {
+                println!("{:#?}", comment.parent().text_range().start());
             }
 
-            if !node.contains_comments() {
-                continue;
-            }
+            // if !parent.contains_comments() {
+            //     continue;
+            // }
 
-            let tokens = node.tokens();
+            // while parent.children().into_iter().count() > 0 {
+            //     parent = parent.children().next().unwrap();
+            //     // println!("{}", child);
+            // }
 
-            let comment = tokens.iter().find(|tok| tok.kind() == SyntaxKind::COMMENT).expect("Failed to find comment");
-            println!("{}", comment.parent());
+            // if !node.contains_comments() {
+            //     continue;
+            // }
+
+            // let tokens = node.tokens();
+
+            // let comment = tokens.iter().find(|tok| tok.kind() == SyntaxKind::COMMENT).expect("Failed to find comment");
+            // println!("{}", comment.parent());
 
             // if node.contains_comments() {
             //     for descendant in node.descendants() {
@@ -45,14 +59,4 @@ impl Parser for JsParser {
         }
         panic!("Not implemented");
     }
-}
-
-fn recursive_visitor(node: SyntaxNode) -> SyntaxNodeChildren {
-    return node.children();
-}
-
-fn check_all_children(nodes: SyntaxNodeChildren) -> Vec<SymbolSpan> {
-    for node in nodes {
-    }
-    return Vec::new();
 }
