@@ -105,6 +105,9 @@ fn to_line_span(text: &str, offset: usize) -> LineSpan {
     panic!("Failed to get line span");
 }
 
+fn search(node: SyntaxNodeChildren) {
+}
+
 fn to_symbol_span(text: &str, start: usize, end: usize) -> SymbolSpan {
     SymbolSpan {
         start: to_line_span(&text, start),
