@@ -18,7 +18,16 @@ impl Parser for JsParser {
         let symbols: Vec<(SymbolSpan, SymbolSpan)> = Vec::new();
 
         for item in nodes {
-            visit(item);
+            for child in item.children() {
+                println!("{}", child);
+                for other_child in child.children() {
+                    println!("other child");
+                    println!("{}", other_child);
+                }
+                println!("Ok");
+            }
+            // println!("{}", item);
+            // visit(item);
             // let children = item.children().map(|child| stack.push(child));
             // and for each one of their children
             // children.map(|n| stack.push(n));
