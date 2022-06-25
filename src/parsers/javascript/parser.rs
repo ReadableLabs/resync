@@ -23,6 +23,7 @@ impl Parser for JsParser {
             let comments = tokens.iter().filter(|token| token.kind() == SyntaxKind::COMMENT);
 
             for comment in comments {
+                println!("{}", comment.siblings_with_tokens(rslint_parser::Direction::Next).next().unwrap());
                 let range = comment.text_range();
 
                 let parent_range = comment.parent().text_range();
@@ -40,7 +41,10 @@ impl Parser for JsParser {
                 println!("{:#?}", to_symbol_span(&text, comment_start, comment_end));
                 println!("{:#?}", to_symbol_span(&text, fun_start, fun_end));
 
-                symbols.push((to_symbol_span(&text, comment_start, comment_end), to_symbol_span(&text, fun_start, fun_end)));
+                let comment_symbol = to_symbol_span(&text, comment_start, comment_end);
+                let fun_symbol = to_symbol_span(&text, fun_start, fun_end);
+
+                symbols.push((comment_symbol, fun_symbol));
             }
 
 

@@ -26,8 +26,15 @@ impl Config {
         self.get_and_create().unwrap().join("file_info.db")
     }
 
-    pub fn open_db(&self) -> PickleDb {
+    pub fn open_db(&self, debug: bool) -> PickleDb {
         let file = self.get_db_path();
+        if debug == true {
+            return PickleDb::new(
+                &file,
+                pickledb::PickleDbDumpPolicy::AutoDump,
+                pickledb::SerializationMethod::Json
+            );
+        }
         let db = match PickleDb::load(
             &file,
             pickledb::PickleDbDumpPolicy::AutoDump,

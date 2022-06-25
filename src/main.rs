@@ -60,7 +60,7 @@ fn main() {
     };
 
     let config = Config {};
-    let db = config.open_db();
+    let db = config.open_db(true);
 
     let repo = Repository::open(working_dir).expect("Failed to open repository");
     let porcelain = matches.is_present("porcelain");
