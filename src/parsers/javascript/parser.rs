@@ -9,43 +9,47 @@ impl Parser for JsParser {
     fn parse(&self, file: &PathBuf) -> Result<Vec<(crate::parsers::types::SymbolSpan, crate::parsers::types::SymbolSpan)>, &str> {
         let text = read_to_string(file).unwrap();
 
+        let mut stack: Vec<SyntaxNode> = Vec::new();
+
         let parse = parse_text(text.as_str(), 0);
 
         let nodes = parse.syntax().children().into_iter();
 
-        let mut symbols: Vec<(SymbolSpan, SymbolSpan)> = Vec::new();
+        let symbols: Vec<(SymbolSpan, SymbolSpan)> = Vec::new();
 
-        for node in nodes {
-            let mut parent = node;
+        for item in nodes {
+            visit(item);
+            // let children = item.children().map(|child| stack.push(child));
+            // and for each one of their children
+            // children.map(|n| stack.push(n));
+            // let comments = tokens.iter().filter(|token| token.kind() == SyntaxKind::COMMENT);
 
-            let tokens = parent.tokens();
+            // for comment in comments {
+            //     // println!("{}", comment.siblings_with_tokens(rslint_parser::Direction::Next).next().unwrap());
+            //     let range = comment.text_range();
+            //     let parent_range = comment.parent().text_range();
 
-            let comments = tokens.iter().filter(|token| token.kind() == SyntaxKind::COMMENT);
+            //     // kind of hacky, can't add one after into
+            //     let mut fun_start: usize = range.end().into();
+            //     fun_start += 1;
 
-            for comment in comments {
-                println!("{}", comment.siblings_with_tokens(rslint_parser::Direction::Next).next().unwrap());
-                let range = comment.text_range();
+            //     let fun_end: usize = parent_range.end().into();
 
-                let parent_range = comment.parent().text_range();
+            //     // can be usize
+            //     let comment_start: usize = range.start().into();
+            //     let comment_end: usize = range.end().into();
 
-                // kind of hacky, can't add one after into
-                let mut fun_start: usize = range.end().into();
-                fun_start += 1;
+            //     // println!("{:#?}", to_symbol_span(&text, comment_start, comment_end));
+            //     // println!("{:#?}", to_symbol_span(&text, fun_start, fun_end));
 
-                let fun_end: usize = parent_range.end().into();
+            //     let comment_symbol = to_symbol_span(&text, comment_start, comment_end);
+            //     let fun_symbol = to_symbol_span(&text, fun_start, fun_end);
 
-                // can be usize
-                let comment_start: usize = range.start().into();
-                let comment_end: usize = range.end().into();
-
-                println!("{:#?}", to_symbol_span(&text, comment_start, comment_end));
-                println!("{:#?}", to_symbol_span(&text, fun_start, fun_end));
-
-                let comment_symbol = to_symbol_span(&text, comment_start, comment_end);
-                let fun_symbol = to_symbol_span(&text, fun_start, fun_end);
-
-                symbols.push((comment_symbol, fun_symbol));
+            //     symbols.push((comment_symbol, fun_symbol));
             }
+            Ok(symbols)
+        }
+    }
 
 
             // if !parent.contains_comments() {
@@ -78,11 +82,7 @@ impl Parser for JsParser {
             //     //     println!("child");
             //     // }
             // }
-        }
 
-        return Ok(symbols);
-    }
-}
 
 fn to_line_span(text: &str, offset: usize) -> LineSpan {
     let mut char_idx: usize = 0;
@@ -105,7 +105,9 @@ fn to_line_span(text: &str, offset: usize) -> LineSpan {
     panic!("Failed to get line span");
 }
 
-fn search(node: SyntaxNodeChildren) {
+fn visit(node: SyntaxNode) {
+    println!("{}", node);
+    node.children().for_each(visit);
 }
 
 fn to_symbol_span(text: &str, start: usize, end: usize) -> SymbolSpan {
