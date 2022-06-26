@@ -15,6 +15,7 @@ pub struct JsParser;
 
 impl Parser for JsParser {
     fn parse(&self, file: &PathBuf) -> Result<Vec<(crate::parsers::types::SymbolSpan, crate::parsers::types::SymbolSpan)>, &str> {
+        let text = read_to_string(&file).expect("Failed to read file");
         let comments: SingleThreadedComments = Default::default();
         let cm: Lrc<SourceMap> = Default::default();
         let fm = cm.load_file(file).expect("Failed to load file");
@@ -31,10 +32,14 @@ impl Parser for JsParser {
         let module = parser.parse_module().expect("Failed to parse module");
         let mut visitor = JsVisitor {
             fm,
+            spans: Vec::new(),
             symbols: Vec::new()
         };
 
         visitor.fold_module(module);
+        visitor.spans.iter().for_each(|span| {
+            println!("{:#?}", to_symbol_span(&text, span.lo.0, span.hi.0));
+        });
 
         println!("done");
         // println!("{:#?}", module);
@@ -43,6 +48,12 @@ impl Parser for JsParser {
         }
     }
 
+
+fn to_symbol_span(text: &str, start: u32, end: u32) -> SymbolSpan {
+    return SymbolSpan {
+        start: to_line_span(&text, usize::try_from(start).unwrap()),
+        end: to_line_span(&text, usize::try_from(end).unwrap())}
+}
 
 fn to_line_span(text: &str, offset: usize) -> LineSpan {
     let mut char_idx: usize = 0;
@@ -62,5 +73,6 @@ fn to_line_span(text: &str, offset: usize) -> LineSpan {
         }
     }
 
+    // this happens if file doesn't have empty line at the end
     panic!("Failed to get line span");
 }
