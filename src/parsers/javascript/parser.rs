@@ -30,6 +30,7 @@ impl Parser for JsParser {
 
         let module = parser.parse_module().expect("Failed to parse module");
         let mut visitor = JsVisitor {
+            fm,
             symbols: Vec::new()
         };
 

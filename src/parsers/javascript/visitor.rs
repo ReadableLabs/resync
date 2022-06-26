@@ -1,8 +1,12 @@
+use std::rc::Rc;
+
+use swc_common::SourceFile;
 use swc_ecma_visit::Fold;
 
 use crate::parsers::types::SymbolSpan;
 
 pub struct JsVisitor {
+    pub fm: Rc<SourceFile>,
     pub symbols: Vec<(SymbolSpan, SymbolSpan)>,
 }
 
@@ -21,6 +25,6 @@ impl Fold for JsVisitor
         };
 
         println!("{}", span.lo().0);
-        self.fold_decl(decl)
+        decl
     }
 }
