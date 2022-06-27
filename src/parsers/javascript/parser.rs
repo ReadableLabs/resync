@@ -57,7 +57,7 @@ impl Parser for JsParser {
             }
         }
 
-        println!("done");
+        // println!("done");
 
         Ok(matched_symbols)
     }
