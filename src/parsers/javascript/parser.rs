@@ -7,7 +7,7 @@ use swc_common::{
 };
 use swc_ecma_ast::{ClassDecl, VarDecl, FnDecl};
 use swc_ecma_parser::{lexer::Lexer, Parser as SwcParser, StringInput, Syntax};
-use swc_ecma_visit::{Fold, FoldWith};
+use swc_ecma_visit::{Fold, FoldWith, Visit};
 
 use crate::parsers::{Parser, types::{SymbolSpan, LineSpan}, javascript::visitor::JsVisitor};
 
@@ -36,7 +36,7 @@ impl Parser for JsParser {
             symbols: Vec::new()
         };
 
-        visitor.fold_module(module);
+        visitor.visit_module(&module);
         visitor.spans.iter().for_each(|span| {
             println!("{:#?}", to_symbol_span(&text, span.lo.0, span.hi.0));
         });

@@ -23,5 +23,5 @@ swc_ecma_ast = "0.79.0"
 walkdir = "2.3.2"
 syn = { version = "1.0.91", features = ["full", "extra-traits", "visit", "parsing", "printing"]}
 proc-macro2 = { version = "1.0.37", features = ["span-locations"] }
-nom = "7"
+nom = "7.1.1"
 nom_locate = "4.0.0"
