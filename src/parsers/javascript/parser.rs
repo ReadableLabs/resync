@@ -49,24 +49,17 @@ impl Parser for JsParser {
                 if symbol.start.line - 1 == comment.end.line {
                     matched_symbols.push((comment.clone(), symbol.clone()));
                 }
+
+                // this will speed up search but will not allow classes to be found
                 // else if symbol.start.line - 1 > comment.end.line {
                 //     break;
                 // }
             }
-
-            // println!("{:#?}", "checking comment");
         }
 
-        // for symbol in matched_symbols {
-        //     println!("symbol");
-        //     println!("{:#?}", symbol);
-        // }
-
         println!("done");
-        // println!("{:#?}", module);
 
         Ok(matched_symbols)
-        // panic!("Not implemented");
     }
 }
 

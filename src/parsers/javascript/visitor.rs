@@ -91,5 +91,9 @@ fn to_line_span(text: &str, offset: usize, start: bool) -> LineSpan {
     }
 
     // this happens if file doesn't have empty line at the end
-    panic!("Failed to get line span");
+    return LineSpan {
+        character: char_idx,
+        line: line_dx
+    };
+    // panic!("Failed to get line span");
 }
