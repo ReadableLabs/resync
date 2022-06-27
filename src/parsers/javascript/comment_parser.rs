@@ -46,11 +46,18 @@ pub fn get_comment(input: NomSpan) -> IResult<NomSpan, SymbolSpan> {
     Ok((input, symbol))
 }
 
-pub fn parse_comments(text: &str) {
+pub fn parse_comments(text: &str) -> Vec<SymbolSpan> {
     let mut input = NomSpan::new(text);
 
-    // let it = std::iter::from_fn(move || {
-    //     match get_comment(input) {
-    //     }
-    // });
+    let it = std::iter::from_fn(move || {
+        match get_comment(input) {
+            Ok((i, comment)) => {
+                input = i;
+                Some(comment)
+            },
+            _ => None,
+        }
+    });
+
+    return it.collect();
 }

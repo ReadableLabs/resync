@@ -9,7 +9,7 @@ use swc_ecma_ast::{ClassDecl, VarDecl, FnDecl};
 use swc_ecma_parser::{lexer::Lexer, Parser as SwcParser, StringInput, Syntax};
 use swc_ecma_visit::{Fold, FoldWith, Visit};
 
-use crate::parsers::{Parser, types::{SymbolSpan, LineSpan}, javascript::visitor::JsVisitor};
+use crate::parsers::{Parser, types::{SymbolSpan, LineSpan}, javascript::{visitor::JsVisitor, comment_parser::parse_comments}};
 
 pub struct JsParser;
 
@@ -40,6 +40,13 @@ impl Parser for JsParser {
         visitor.spans.iter().for_each(|span| {
             println!("{:#?}", to_symbol_span(&text, span.lo.0, span.hi.0));
         });
+
+        let comments = parse_comments(&text);
+
+        for comment in comments {
+            println!("comment");
+            println!("{:#?}", comment);
+        }
 
         println!("done");
         // println!("{:#?}", module);

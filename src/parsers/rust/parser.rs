@@ -28,6 +28,10 @@ impl Parser for RsParser {
         let mut visitor = RsVisitor { symbols: Vec::new() };
         visitor.visit_file(&ast);
 
+        // for symbol in &visitor.symbols {
+        //     println!("{:#?}", symbol.0);
+        // }
+
         Ok(visitor.symbols)
     }
 }
