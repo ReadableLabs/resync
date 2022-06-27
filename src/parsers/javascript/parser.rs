@@ -30,56 +30,46 @@ impl Parser for JsParser {
         let mut parser = SwcParser::new_from(lexer);
 
         let module = parser.parse_module().expect("Failed to parse module");
-        let mut visitor = JsVisitor {
-            fm,
-            spans: Vec::new(),
-            symbols: Vec::new()
-        };
+        let mut visitor = JsVisitor::new(&text);
 
         visitor.visit_module(&module);
-        visitor.spans.iter().for_each(|span| {
-            println!("{:#?}", to_symbol_span(&text, span.lo.0, span.hi.0));
-        });
+        // visitor.spans.iter().for_each(|span| {
+            // println!("{:#?}", to_symbol_span(&text, span.lo.0, span.hi.0));
+        // });
 
         let comments = parse_comments(&text);
 
-        for comment in comments {
-            println!("comment");
-            println!("{:#?}", comment);
+        let mut matched_symbols: Vec<(SymbolSpan, SymbolSpan)> = Vec::new();
+
+        for comment in &comments {
+            // println!("comment");
+            // println!("{:#?}", comment.end.line);
+
+            for symbol in &visitor.symbols {
+                if symbol.start.line - 1 == comment.end.line {
+                    matched_symbols.push((comment.clone(), symbol.clone()));
+                }
+                // else if symbol.start.line - 1 > comment.end.line {
+                //     break;
+                // }
+            }
+
+            // println!("{:#?}", "checking comment");
         }
+
+        // for symbol in matched_symbols {
+        //     println!("symbol");
+        //     println!("{:#?}", symbol);
+        // }
 
         println!("done");
         // println!("{:#?}", module);
 
-        panic!("Not implemented");
-        }
+        Ok(matched_symbols)
+        // panic!("Not implemented");
     }
-
-
-fn to_symbol_span(text: &str, start: u32, end: u32) -> SymbolSpan {
-    return SymbolSpan {
-        start: to_line_span(&text, usize::try_from(start).unwrap()),
-        end: to_line_span(&text, usize::try_from(end).unwrap())}
 }
 
-fn to_line_span(text: &str, offset: usize) -> LineSpan {
-    let mut char_idx: usize = 0;
-    let mut line_idx: usize = 0;
 
-    for (idx, char) in text.chars().enumerate() {
-        if idx == offset {
-            return LineSpan {
-                character: char_idx,
-                line: line_idx
-            }
-        }
-        char_idx += 1;
-        if char == '\n' {
-            char_idx = 0;
-            line_idx += 1;
-        }
-    }
+    
 
-    // this happens if file doesn't have empty line at the end
-    panic!("Failed to get line span");
-}
