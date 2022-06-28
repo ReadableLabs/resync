@@ -33,7 +33,7 @@ pub fn get_parser(file: &PathBuf, ignore_patterns: &[&str]) -> Option<Box<dyn Pa
         "jsx" => Some(Box::new(JsParser {ts: false})),
         "ts" => Some(Box::new(JsParser {ts: true})),
         /*
-        "tsx" => Box::new(TsParser {}),
+        "tsx" => Some(Box::new(JsParser {ts: true})),
         */
         "rs" => Some(Box::new(RsParser {})),
         _ => {

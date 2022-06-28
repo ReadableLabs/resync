@@ -44,6 +44,10 @@ fn main() {
              .short('m')
              .long("no-resync-branch")
              .help("Don't use or create a resync branch (out of sync comments won't be updated until you commit to your own branch)"))
+        .arg(Arg::new("reset-db")
+            .short('r')
+            .long("reset-db")
+            .help("Resets resyncs internal db"))
         .arg(Arg::new("dir")
              .help("Sets working dir")
              .short('d')
@@ -60,7 +64,9 @@ fn main() {
     };
 
     let config = Config {};
-    let db = config.open_db(true);
+
+    let debug = matches.is_present("reset-db");
+    let db = config.open_db(debug);
 
     let repo = Repository::open(working_dir).expect("Failed to open repository");
     let porcelain = matches.is_present("porcelain");

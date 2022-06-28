@@ -152,7 +152,7 @@ impl Checker {
             Ok(funs) => funs,
             Err(e) => {
                 if self.porcelain == false {
-                    println!("Failed to parse file. Error {}. Skipping", e);
+                    println!("Failed to parse file, Skipping");
                 }
                 return;
             }

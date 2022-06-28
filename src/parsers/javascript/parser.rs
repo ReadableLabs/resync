@@ -1,4 +1,4 @@
-use std::{path::PathBuf, fs::read_to_string, ops::Deref, borrow::Borrow, any::{Any, type_name}};
+use std::{path::PathBuf, fs::read_to_string, ops::Deref, borrow::Borrow, any::{Any, type_name}, ffi::OsStr};
 
 use swc_common::{sync::Lrc, comments::SingleThreadedComments, Spanned};
 use swc_common::{
@@ -37,7 +37,12 @@ impl Parser for JsParser {
 
         let mut parser = SwcParser::new_from(lexer);
 
-        let module = parser.parse_module().expect("Failed to parse module");
+        let module = match parser.parse_module() {
+            Ok(module) => module,
+            Err(e) => {
+                return Err("Failed to parse file");
+            }
+        }; //.expect(
         let mut visitor = JsVisitor::new(&text);
 
         visitor.visit_module(&module);
