@@ -23,8 +23,8 @@ impl Parser for JsParser {
         let fm = cm.load_file(file).expect("Failed to load file");
 
         let syntax = match self.ts {
-            true => Syntax::Es(Default::default()),
-            false => Syntax::Typescript(Default::default())
+            true => Syntax::Typescript(Default::default()),
+            false => Syntax::Es(Default::default())
         };
 
         let lexer = Lexer::new(
