@@ -11,7 +11,9 @@ use swc_ecma_visit::{Fold, FoldWith, Visit};
 
 use crate::parsers::{Parser, types::{SymbolSpan, LineSpan}, javascript::{visitor::JsVisitor, comment_parser::parse_comments}};
 
-pub struct JsParser;
+pub struct JsParser {
+    pub ts: bool,
+}
 
 impl Parser for JsParser {
     fn parse(&self, file: &PathBuf) -> Result<Vec<(crate::parsers::types::SymbolSpan, crate::parsers::types::SymbolSpan)>, &str> {
@@ -20,8 +22,14 @@ impl Parser for JsParser {
         let cm: Lrc<SourceMap> = Default::default();
         let fm = cm.load_file(file).expect("Failed to load file");
 
+        let syntax = match self.ts {
+            true => Syntax::Es(Default::default()),
+            false => Syntax::Typescript(Default::default())
+        };
+
         let lexer = Lexer::new(
-            Syntax::Es(Default::default()),
+            syntax,
+            // Syntax::Es(Default::default()),
             Default::default(),
             StringInput::from(&*fm),
             Some(&comments)

@@ -29,10 +29,10 @@ pub fn get_parser(file: &PathBuf, ignore_patterns: &[&str]) -> Option<Box<dyn Pa
 
     // just use ecma instead of js or ts or any of these, and do the check in the file
     match extension {
-        "js" => Some(Box::new(JsParser {})),
+        "js" => Some(Box::new(JsParser {ts: false})),
+        "jsx" => Some(Box::new(JsParser {ts: false})),
+        "ts" => Some(Box::new(JsParser {ts: true})),
         /*
-        "jsx" => Box::new(JsParser {}),
-        "ts" => Box::new(TsParser {}),
         "tsx" => Box::new(TsParser {}),
         */
         "rs" => Some(Box::new(RsParser {})),
