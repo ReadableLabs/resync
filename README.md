@@ -31,8 +31,9 @@ cargo install --path .
 ### Supported Languages
 
 - [x] Rust
-- [ ] Javscript
-- [ ] Typescript
+- [x] Javscript
+- [x] JavaScript React
+- [x] Typescript
 - [ ] C
 - [ ] C++
 - [ ] C#
