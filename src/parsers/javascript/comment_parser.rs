@@ -32,7 +32,9 @@ pub fn tag_start(input: NomSpan) -> IResult<NomSpan, NomSpan> {
 
 pub fn tag_body(input: NomSpan) -> IResult<NomSpan, NomSpan> {
     alt((
+        // match since you need start pos
         preceded(tag("/"), take_until("\n")),
+        preceded(preceded(tag("*"), take_until("*/")), tag("*/")),
         // two preceded
         rest
     ))(input)
