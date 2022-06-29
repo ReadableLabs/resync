@@ -34,6 +34,7 @@ cargo install --path .
 - [x] Javscript
 - [x] JavaScript React
 - [x] Typescript
+- [ ] Typescript React
 - [ ] C
 - [ ] C++
 - [ ] C#
