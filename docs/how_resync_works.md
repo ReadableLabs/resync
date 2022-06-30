@@ -1,6 +1,3 @@
 ### How Resync Works
 
-There are three things which can cause a comment to become out of sync
-
-1. Old comment (helping detect old docs, making sure documentation stays fresh)
-2. Amount of commits made to the code but not the comment
+Resync is a multi language comment checker. It works by getting comment/symbol pairs from source files, and then checking the git blame info for each of those symbols to see if a comment is out of sync or not.
