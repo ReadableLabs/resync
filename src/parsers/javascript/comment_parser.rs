@@ -1,9 +1,7 @@
 use nom::{
-    sequence::{preceded, tuple, delimited}, IResult, bytes::complete::{take_until, tag},
-    branch::alt, combinator::rest
+    sequence::{preceded, tuple}, IResult, bytes::complete::{take_until, tag},
 };
 use nom_locate::{LocatedSpan, position};
-use syn::PredicateLifetime;
 
 use crate::parsers::types::{SymbolSpan, LineSpan};
 
@@ -24,18 +22,6 @@ pub fn end(input: NomSpan) -> IResult<NomSpan, NomSpan> {
     let (input, end) = tag("*/")(input)?;
     let (input, pos) = position(input)?;
     Ok((input, pos))
-}
-
-pub fn tag_start(input: NomSpan) -> IResult<NomSpan, NomSpan> {
-    preceded(take_until("/"), tag("/"))(input)
-}
-
-pub fn tag_body(input: NomSpan) -> IResult<NomSpan, NomSpan> {
-    alt((
-        preceded(tag("/"), take_until("\n")),
-        // two preceded
-        rest
-    ))(input)
 }
 
 pub fn get_comment(input: NomSpan) -> IResult<NomSpan, SymbolSpan> {
