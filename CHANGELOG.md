@@ -1,12 +1,12 @@
 # Changelog
 
-## [0.2.1]
+## [1.1.0]
 
 ### Changed
 
 - Files in .gitignore are no longer checked for out of sync comments
 
-## [0.2.0]
+## [1.0.0]
 
 ### Added
 
