@@ -102,12 +102,12 @@ fn main() {
     let mut checker = Checker::new(repo, working_dir.to_path_buf(), ac, porcelain, db);
 
     if matches.is_present("check-file") {
+        let mut ignore_files: Vec<String> = Vec::new();
         let file = matches.value_of("check-file").unwrap(); // file is relative path
         // get parent dir from working dir before doing this
         let full_path = Path::join(working_dir, file);
 
-        checker.check_file(full_path);
-        // check_file(&repo, &working_dir, &full_path, &ac, &porcelain);
+        checker.check_file(full_path, &mut ignore_files);
 
         std::process::exit(0);
     }

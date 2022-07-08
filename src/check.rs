@@ -6,8 +6,9 @@ use crate::tools::{get_latest_line, check_control, unix_time_diff};
 use crate::parsers::get_parser;
 use crate::info::{get_line_info, get_commit_diff};
 use std::ffi::OsStr;
+use std::io::{BufReader, BufRead};
 use std::path::{Path, PathBuf};
-use std::fs::{read_to_string};
+use std::fs::{read_to_string, File};
 use std::time::{SystemTime, UNIX_EPOCH};
 use git2::{Repository, Oid};
 use crate::parsers::types::SymbolSpan;
@@ -65,10 +66,11 @@ impl Checker {
     }
 
     /// returns sync info
-    pub fn check_file(&mut self, file: PathBuf) {
+    pub fn check_file(&mut self, file: PathBuf, ignore_files: &mut Vec<String>) {
         // failed to get last edit, just continue
-        let patterns = [".git", ".swp", "node_modules", "target"]; // TODO: add global pattern list, or read gitignore
-        // let f = file.path().to_str().unwrap();
+        let mut patterns: Vec<String> = vec![".git".to_string(), ".swp".to_string(), "node_modules".to_string(), "target".to_string()]; // TODO: add global pattern list, or read gitignore
+        patterns.extend(ignore_files.iter().cloned());
+
         if self.ac.is_match(file.to_str().unwrap()) {
             return;
         }
@@ -211,9 +213,29 @@ impl Checker {
 
     }
 
+    fn check_gitignore(&self) -> Vec<String> {
+        let mut ignore_lines: Vec<&str> = Vec::new();
+        let gitignore = Path::join(&self.working_dir, ".gitignore");
+
+        if !Path::exists(&gitignore) {
+            return vec![];
+        }
+
+        let file = File::open(gitignore).expect("Failed to open gitignore");
+
+        let buf = BufReader::new(file);
+
+        buf.lines()
+        .map(|f| f.expect(("Failed to read gitignore")))
+        .collect()
+    }
+
     pub fn check_working_dir(&mut self) {
+
+        let mut ignore_files = self.check_gitignore();
+
         for file in WalkDir::new(&self.working_dir).into_iter().filter_map(|e| e.ok()) {
-            self.check_file(file.path().to_path_buf());
+            self.check_file(file.path().to_path_buf(), &mut ignore_files);
         }
     }
 }

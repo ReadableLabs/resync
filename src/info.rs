@@ -34,13 +34,14 @@ pub fn get_line_info(repo: &Repository, file: &Path) -> Result<HashMap<usize, Li
         } // maybe this isn't good
     };
 
-
     let mut blame_opts = BlameOptions::new();
     blame_opts.newest_commit(branch_oid);
 
     let blame = repo.blame_file(file, Some(&mut blame_opts))?;
+
     let object = repo.revparse_single(&spec[..])?;
     let blob = repo.find_blob(object.id())?;
+
 
     let reader = BufReader::new(blob.content());
     for (i, _) in reader.lines().enumerate() {
