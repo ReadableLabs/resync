@@ -66,7 +66,6 @@ impl Checker {
 
     /// returns sync info
     pub fn check_file(&mut self, file: PathBuf, ignore_files: &mut Vec<String>) {
-        // failed to get last edit, just continue
         let mut patterns: Vec<String> = vec![".git".to_string(), ".swp".to_string(), "node_modules".to_string(), "target".to_string()]; // TODO: add global pattern list, or read gitignore
         patterns.extend(ignore_files.iter().cloned());
 
@@ -74,7 +73,6 @@ impl Checker {
             return;
         }
 
-        // check if file is directory
         let ext = match file.extension() {
             Some(ext) => ext.to_str().unwrap(),
             None => {

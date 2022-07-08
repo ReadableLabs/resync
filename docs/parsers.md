@@ -16,9 +16,9 @@ All parsers implement `Parser` found in `parsers/base.rs`. When you call `get_pa
 
 To add a parser, implement `Parser`, make sure the parser returns a vector containing a tuple of `SymbolSpan`s. The first `SymbolSpan` in the tuple is the range of the comment, and the second `SymbolSpan` is the range of whichever symbol came below it.
 
-If you need an example of a parser which implements `Parser`, check `parsers/rust/parser.rs` and `parsers/javascript/parser.rs`.
+If you need an example of a parser which implements `Parser`, check `parsers/rust/parser.rs` or `parsers/javascript/parser.rs`.
 
-Parsers return locations of source code in a 1-indexed format. The first line is 1, and the line number matches up with your IDE (line 3 in a `SymbolSpan` would be line 3 in your IDE).
+Parsers return locations of source code in a 1-indexed format. The first line is 1, line 3 in a `SymbolSpan` would be line 3 in your IDE.
 
 ### FAQ
 
