@@ -52,7 +52,7 @@ If you want to support a new language, view the [docs](./docs/parsers.md) on how
 
 ### Current
 
-- internal db to check when file was last modified to make subsequent parses quicker
+- Python support
 
 ### TODO
 
@@ -60,4 +60,3 @@ If you want to support a new language, view the [docs](./docs/parsers.md) on how
 - use optional dependencies if you only want to compile for a few languages
 - Allow resync to be used on the master branch, without creating resync branch (maybe)
 - add tests to mock extension
-- Add debug flag which creates a new database by default instead of opening one
