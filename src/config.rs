@@ -41,7 +41,7 @@ impl Config {
             pickledb::SerializationMethod::Json
         ) {
             Ok(db) => db,
-            Err(e) => {
+            Err(_) => {
                 PickleDb::new(
                     &file,
                     pickledb::PickleDbDumpPolicy::AutoDump,

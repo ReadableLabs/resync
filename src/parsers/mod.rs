@@ -8,7 +8,6 @@ use crate::parsers::{
     types::SymbolSpan};
 use std::{vec::Vec, path::PathBuf};
 use aho_corasick::AhoCorasick;
-use std::path::Path;
 
 pub fn get_parser(file: &PathBuf, ignore_patterns: &Vec<String>) -> Option<Box<dyn Parser>> {
     let ac = AhoCorasick::new(ignore_patterns);

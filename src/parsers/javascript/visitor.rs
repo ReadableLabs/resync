@@ -1,7 +1,5 @@
-use std::{rc::Rc, borrow::Borrow};
-
-use swc_common::{SourceFile, Span};
-use swc_ecma_visit::{Fold, VisitAll, Visit, FoldWith};
+use swc_common::Span;
+use swc_ecma_visit::Visit;
 
 use crate::parsers::types::{SymbolSpan, LineSpan};
 

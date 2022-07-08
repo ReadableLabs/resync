@@ -10,11 +10,9 @@ use aho_corasick::AhoCorasick;
 use resync::check::Checker;
 use resync::config::Config;
 use clap::{Arg, Command};
-use walkdir::WalkDir;
 use git2::Repository;
 use std::env::current_dir;
 use std::fs::{File, remove_file};
-use dirs;
 
 fn main() {
     let matches = Command::new("Resync")

@@ -1,15 +1,11 @@
-use std::{path::PathBuf, fs::read_to_string, ops::Deref, borrow::Borrow, any::{Any, type_name}, ffi::OsStr};
+use std::{path::PathBuf, fs::read_to_string};
 
-use swc_common::{sync::Lrc, comments::SingleThreadedComments, Spanned};
-use swc_common::{
-    errors::{ColorConfig, Handler},
-    FileName, FilePathMapping, SourceMap,
-};
-use swc_ecma_ast::{ClassDecl, VarDecl, FnDecl};
+use swc_common::{sync::Lrc, comments::SingleThreadedComments};
+use swc_common::SourceMap;
 use swc_ecma_parser::{lexer::Lexer, Parser as SwcParser, StringInput, Syntax};
-use swc_ecma_visit::{Fold, FoldWith, Visit};
+use swc_ecma_visit::Visit;
 
-use crate::parsers::{Parser, types::{SymbolSpan, LineSpan}, javascript::{visitor::JsVisitor, comment_parser::parse_comments}};
+use crate::parsers::{Parser, types::SymbolSpan, javascript::{visitor::JsVisitor, comment_parser::parse_comments}};
 
 pub struct JsParser {
     pub ts: bool,
@@ -39,16 +35,13 @@ impl Parser for JsParser {
 
         let module = match parser.parse_module() {
             Ok(module) => module,
-            Err(e) => {
+            Err(_) => {
                 return Err("Failed to parse file");
             }
         }; //.expect(
         let mut visitor = JsVisitor::new(&text);
 
         visitor.visit_module(&module);
-        // visitor.spans.iter().for_each(|span| {
-            // println!("{:#?}", to_symbol_span(&text, span.lo.0, span.hi.0));
-        // });
 
         let comments = parse_comments(&text);
 

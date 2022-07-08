@@ -5,7 +5,6 @@ pub mod single_line;
 use std::path::PathBuf;
 
 use crate::{formatters::{
-    porcelain::PorcelainFormatter,
     terminal::TerminalFormatter,
     single_line::SingleLineFormatter
 }, parsers::types::SymbolSpan};

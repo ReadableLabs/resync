@@ -5,10 +5,9 @@ use walkdir::WalkDir;
 use crate::tools::{get_latest_line, check_control, unix_time_diff};
 use crate::parsers::get_parser;
 use crate::info::{get_line_info, get_commit_diff};
-use std::ffi::OsStr;
 use std::io::{BufReader, BufRead};
 use std::path::{Path, PathBuf};
-use std::fs::{read_to_string, File};
+use std::fs::File;
 use std::time::{SystemTime, UNIX_EPOCH};
 use git2::{Repository, Oid};
 use crate::parsers::types::SymbolSpan;
@@ -109,34 +108,7 @@ impl Checker {
             }
 
             return;
-
-            // add for loop here as it will be stored in a vec
-
-            // ok
-
-            // println!("{}\n{}\n{}\n{}\n{}\n{}", symbol.time_diff, symbol.commit_diff, symbol.relative_path.display(), file_name, comment.start.line, comment.end.line);
-            // time diff, commit_diff, relative path, file name, comment start, comment end
         }
-
-
-        // if there is already something, get the file and print it
-        // else, continue
-
-        let read = match read_to_string(&file) {
-            Ok(read) => read,
-            Err(e) => {
-                if self.porcelain == false {
-
-                    println!("{:#?}", file.display());
-                    println!("{}", e);
-                    println!("Failed to read file {}, skipping", file.display());
-                }
-                return;
-            }
-        };
-
-
-        // let repo = Repository::open(working_dir).expect("Failed to open repo");
 
         let blame_lines = match get_line_info(&self.repo, &relative_path) {
             Ok(lines) => lines,
@@ -152,7 +124,7 @@ impl Checker {
 
         let all_funs = match parser.parse(&file) {
             Ok(funs) => funs,
-            Err(e) => {
+            Err(_) => {
                 if self.porcelain == false {
                     println!("Failed to parse file, Skipping");
                 }
@@ -214,7 +186,6 @@ impl Checker {
     }
 
     fn check_gitignore(&self) -> Vec<String> {
-        let mut ignore_lines: Vec<&str> = Vec::new();
         let gitignore = Path::join(&self.working_dir, ".gitignore");
 
         if !Path::exists(&gitignore) {
@@ -226,7 +197,7 @@ impl Checker {
         let buf = BufReader::new(file);
 
         buf.lines()
-        .map(|f| f.expect(("Failed to read gitignore")))
+        .map(|f| f.expect("Failed to read gitignore"))
         .collect()
     }
 

@@ -14,7 +14,7 @@ impl Parser for RsParser {
     fn parse(&self, file: &PathBuf) -> Result<Vec<(SymbolSpan, SymbolSpan)>, &str> {
         let file_input = match read_to_string(&file) {
             Ok(read) => read,
-            Err(e) => {
+            Err(_) => {
                 return Err("Failed to read file");
             }
         };
