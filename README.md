@@ -60,3 +60,4 @@ If you want to support a new language, view the [docs](./docs/parsers.md) on how
 - use optional dependencies if you only want to compile for a few languages
 - Allow resync to be used on the master branch, without creating resync branch (maybe)
 - add tests to mock extension
+- add flag which prints all symbol ranges of file to better be used with Readable

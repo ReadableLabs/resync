@@ -28,6 +28,7 @@
  * - Changed return type from CaptureStatus to boolean
  * - Added docstring to "sync" function
  * - Removed config using
+ * - sync takes in a git2::Repository instead of path
 */
 
 use git2::{BranchType, DiffOptions, Error, IndexAddOption, Repository, Signature};
@@ -38,8 +39,7 @@ use std::path::Path;
 /// track of the out of sync comments in the extension
 ///
 /// Does not impact the head of your repo
-pub fn sync(path: &Path) -> Result<String, Error> {
-    let repo = Repository::open(path)?;
+pub fn sync(repo: &Repository) -> Result<String, Error> {
     let head = repo.head()?.peel_to_commit()?;
     let message = "resync auto-sync";
 

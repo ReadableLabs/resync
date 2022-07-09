@@ -66,7 +66,7 @@ fn main() {
     let debug = matches.is_present("reset-db");
     let db = config.open_db(debug);
 
-    let repo = Repository::open(working_dir).expect("Failed to open repository");
+    let repo = Repository::discover(working_dir).expect("Failed to open repository");
     let porcelain = matches.is_present("porcelain");
 
     // make .file, sync, and then delete file to make sure branch is made
@@ -74,11 +74,8 @@ fn main() {
 
     File::create(&temp_file).unwrap();
 
-    match sync::sync(working_dir) {
+    match sync::sync(&repo) {
         Ok(_result) => {
-            // if porcelain != true {
-            //     println!("Succesfully synced {}", result);
-            // }
         },
         Err(e) => {
             if porcelain != true {
