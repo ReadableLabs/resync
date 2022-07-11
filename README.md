@@ -14,8 +14,6 @@ To use resync, simply run `resync` in the root of any source code directory. Thi
 
 You can check a single file by running `resync -i relative/file/location` from the root of a project.
 
-The reason you need to run resync in the root of a project directory is because resync needs to open the .git folder.
-
 ### Installing
 
 Head over to the [releases](https://github.com/ReadableLabs/resync/releases) page to download resync. If there aren't compiled binaries for your system, then you can compile resync in the following way.
