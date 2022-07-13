@@ -134,6 +134,7 @@ impl Checker {
 
         // make a module which checks all of these, checkall, which you can implement
         for (comment, function) in all_funs {
+            // TODO: make these return a result and skip if fail
             let comment_idx = get_latest_line(&blame_lines, &comment);
             let fun_idx = get_latest_line(&blame_lines, &function);
 
