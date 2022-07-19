@@ -1,11 +1,21 @@
 use nom::{
-    sequence::{preceded, tuple}, IResult, bytes::complete::{take_until, tag},
+    sequence::{preceded, tuple}, IResult, bytes::complete::{take_until, tag}, character::is_alphabetic,
 };
 use nom_locate::{LocatedSpan, position};
 
 use crate::parsers::types::{SymbolSpan, LineSpan};
 
 pub type NomSpan<'a> = LocatedSpan<&'a str>;
+
+// TODO: make inline comments work
+fn is_valid_comment(input: NomSpan) -> IResult<NomSpan, NomSpan> {
+    panic!("not implemented");
+}
+
+fn inline(input: NomSpan) -> IResult<NomSpan, NomSpan> {
+    let (input, start) = preceded(take_until("//"), tag("//"))(input)?;
+    panic!("not implemented");
+}
 
 fn start(input: NomSpan) -> IResult<NomSpan, NomSpan> {
     let (input, _) = preceded(take_until("/*"), tag("/*"))(input)?;
