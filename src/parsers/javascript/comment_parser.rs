@@ -65,14 +65,16 @@ pub fn get_inline_start(input: NomSpan) -> IResult<NomSpan, NomSpan> {
 }
 
 pub fn get_inline_end(input: NomSpan) -> IResult<NomSpan, NomSpan> {
-    let (input, start_pos) = position(input)?;
+    let (mut input, start_pos) = position(input)?;
     let it = std::iter::from_fn(move || {
         match get_body(input) {
             Ok((i, pos)) => {
                 input = i;
                 Some(pos)
             },
-            _ => None,
+            _ => {
+                None
+            },
         }
     });
 
@@ -81,7 +83,7 @@ pub fn get_inline_end(input: NomSpan) -> IResult<NomSpan, NomSpan> {
         None => start_pos
     };
 
-    let (input, end_pos) = position(last)?;
+    let (input, end_pos) = position(input)?;
 
     Ok((input, end_pos))
 }
@@ -105,7 +107,6 @@ pub fn get_inline(input: NomSpan) -> IResult<NomSpan, SymbolSpan> {
 
     let end_line = end.location_line();
     let end_char = end.get_column();
-
 
     let symbol = SymbolSpan {
         start: LineSpan {
