@@ -16,7 +16,7 @@ use std::fs::{File, remove_file};
 
 fn main() {
     let matches = Command::new("Resync")
-        .version("0.2")
+        .version("1.3")
         .author("Nevin Puri <me@nevin.cc>")
         .about("Easily find out of sync comments")
         .arg(Arg::new("sync")
