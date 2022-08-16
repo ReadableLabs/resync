@@ -49,8 +49,8 @@ impl Parser for JsParser {
 
         for comment in &comments {
             // println!("comment");
-            println!("{:#?}", comment.start.line);
-            println!("{:#?}", comment.end.line);
+            // println!("{:#?}", comment.start.line);
+            // println!("{:#?}", comment.end.line);
 
             for symbol in &visitor.symbols {
                 if symbol.start.line - 1 == comment.end.line {
