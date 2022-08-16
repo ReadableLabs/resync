@@ -1,6 +1,7 @@
 use nom::{
-    sequence::{preceded, tuple}, IResult, bytes::complete::{take_until, take_while, tag}, character::{complete::multispace0, is_alphabetic, is_newline}
+    sequence::{preceded, tuple}, IResult, combinator::iterator, bytes::complete::{take_until, take_while, tag}, character::{complete::multispace0, is_alphabetic, is_newline}
 };
+use std::collections::HashMap;
 use nom_locate::{LocatedSpan, position};
 
 use crate::parsers::types::{SymbolSpan, LineSpan};
@@ -54,23 +55,17 @@ pub fn get_inline_start(input: NomSpan) -> IResult<NomSpan, NomSpan> {
     Ok((input, pos))
 }
 
-pub fn get_inline_end(initial_input: NomSpan) -> IResult<NomSpan, NomSpan> {
-    let mut input = initial_input;
-    let it = std::iter::from_fn(move || {
-        match get_body(input) {
-            Ok((i, pos)) => {
-                input = i;
-                println!("{:#?}", input);
-                Some(pos)
-            },
-            _ => None
-        }
-    });
+pub fn get_inline_end(input: NomSpan) -> IResult<NomSpan, NomSpan> {
+    let mut it = iterator(
+        input,
+        get_body
+    );
+    
+    let parsed: Vec<NomSpan> = it.collect();
 
-    let lines: Vec<NomSpan> = it.collect();
-
-    let (input, end_pos) = position(input)?;
-    println!("after second line - {:#?}", input);
+    let res: IResult<_, _> = it.finish();
+    let output = res.unwrap().0;
+    let (input, end_pos) = position(output)?;
 
     Ok((input, end_pos))
 }
