@@ -1,21 +1,11 @@
 use nom::{
-    sequence::{preceded, tuple}, IResult, bytes::complete::{take_until, take_while, tag}, character::{complete::multispace0, is_alphabetic}
+    sequence::{preceded, tuple}, IResult, bytes::complete::{take_until, take_while, tag}, character::{complete::multispace0, is_alphabetic, is_newline}
 };
 use nom_locate::{LocatedSpan, position};
 
 use crate::parsers::types::{SymbolSpan, LineSpan};
 
 pub type NomSpan<'a> = LocatedSpan<&'a str>;
-
-// TODO: make inline comments work
-fn is_valid_comment(input: NomSpan) -> IResult<NomSpan, NomSpan> {
-    panic!("not implemented");
-}
-
-fn inline(input: NomSpan) -> IResult<NomSpan, NomSpan> {
-    let (input, start) = preceded(take_until("//"), tag("//"))(input)?;
-    panic!("not implemented");
-}
 
 fn start(input: NomSpan) -> IResult<NomSpan, NomSpan> {
     let (input, _) = preceded(take_until("/*"), tag("/*"))(input)?;
@@ -64,26 +54,23 @@ pub fn get_inline_start(input: NomSpan) -> IResult<NomSpan, NomSpan> {
     Ok((input, pos))
 }
 
-pub fn get_inline_end(input: NomSpan) -> IResult<NomSpan, NomSpan> {
-    let (mut input, start_pos) = position(input)?;
+pub fn get_inline_end(initial_input: NomSpan) -> IResult<NomSpan, NomSpan> {
+    let mut input = initial_input;
     let it = std::iter::from_fn(move || {
         match get_body(input) {
             Ok((i, pos)) => {
                 input = i;
+                println!("{:#?}", input);
                 Some(pos)
             },
-            _ => {
-                None
-            },
+            _ => None
         }
     });
 
-    let last = match it.last() {
-        Some(item) => item,
-        None => start_pos
-    };
+    let lines: Vec<NomSpan> = it.collect();
 
     let (input, end_pos) = position(input)?;
+    println!("after second line - {:#?}", input);
 
     Ok((input, end_pos))
 }
@@ -98,7 +85,7 @@ pub fn get_body(input: NomSpan) -> IResult<NomSpan, NomSpan> {
     Ok((input, pos))
 }
 
-pub fn get_inline(input: NomSpan) -> IResult<NomSpan, SymbolSpan> {
+pub fn get_inline(mut input: NomSpan) -> IResult<NomSpan, SymbolSpan> {
     let (input, start) = get_inline_start(input)?;
     let (input, end) = get_inline_end(input)?;
 
@@ -107,7 +94,7 @@ pub fn get_inline(input: NomSpan) -> IResult<NomSpan, SymbolSpan> {
 
     let end_line = end.location_line();
     let end_char = end.get_column();
-
+    
     let symbol = SymbolSpan {
         start: LineSpan {
             line: usize::try_from(start_line).unwrap(),
