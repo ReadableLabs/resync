@@ -38,15 +38,32 @@ impl Checker {
     }
 
     fn should_check(&self, file: &PathBuf) -> bool {
-        let last_edit = std::fs::metadata(&file)
-            .unwrap()
-            .modified()
-            .unwrap()
-            .duration_since(UNIX_EPOCH)
-            .unwrap().as_millis();
-        
-        // let file_name = file.file_name().and_then(OsStr::to_str).unwrap();
-        // println!("{}", &file.display());
+        let last_edit = match std::fs::metadata(&file) {
+            Ok(metadata) => {
+                let modified = metadata.modified();
+
+                if modified.is_err() {
+                    let now = SystemTime::now();
+
+                    now
+                    .duration_since(UNIX_EPOCH)
+                    .expect("Time went backwards").as_millis();
+                }
+
+                modified
+                .unwrap()
+                .duration_since(UNIX_EPOCH)
+                .unwrap().as_millis()
+            },
+
+            Err(e) => {
+                let now = SystemTime::now();
+
+                now
+                .duration_since(UNIX_EPOCH)
+                .expect("Time went backwards").as_millis()
+            }
+        };
 
         let key = format!("{}:time", file.display().to_string());
 
@@ -69,17 +86,34 @@ impl Checker {
         let mut patterns: Vec<String> = vec![".git".to_string(), ".swp".to_string(), "node_modules".to_string(), "target".to_string()]; // TODO: add global pattern list, or read gitignore
         patterns.extend(ignore_files.iter().cloned());
 
-        if self.ac.is_match(file.to_str().unwrap()) {
-            return;
-        }
-
-        let ext = match file.extension() {
-            Some(ext) => ext.to_str().unwrap(),
-            None => {
+        let file_name = match file.to_str() {
+            Some(file) => file,
+            _ => {
                 return;
             }
         };
 
+        // if file_name.is_none() {
+        //     return;
+        // }
+
+        if self.ac.is_match(file_name) {
+            return;
+        }
+
+        let ext = match file.extension() {
+            Some(ext) => {
+                match ext.to_str() {
+                    Some(ext_str) => ext_str,
+                    _ => {
+                        return;
+                    }
+                }
+            },
+            _ => {
+                return;
+            }
+        };
 
         let formatter = get_formatter(&self.porcelain);
 

@@ -112,8 +112,5 @@ fn main() {
     }
 
     checker.check_working_dir();
-
-
-    // println!("Hello, world!");
 }
 
