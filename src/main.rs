@@ -61,18 +61,21 @@ fn main() {
         None => current_dir,
     };
 
-    let config = Config {};
-
     let debug = matches.is_present("reset-db");
-    let db = config.open_db(debug);
 
     let repo = Repository::discover(working_dir).expect("Failed to open repository");
     let porcelain = matches.is_present("porcelain");
 
+    let config = Config::new(porcelain);
+    let db = config.open_db(debug);
+
     // make .file, sync, and then delete file to make sure branch is made
     let temp_file = working_dir.join(".resync");
 
-    File::create(&temp_file).unwrap();
+
+    if File::create(&temp_file).is_err() && porcelain == false {
+        println!("Failed creating resync temp file. Repo might not be synced");
+    };
 
     match sync::sync(&repo) {
         Ok(_result) => {
@@ -84,7 +87,9 @@ fn main() {
         }
     }
 
-    remove_file(&temp_file).unwrap(); // check if result is none or not
+    if remove_file(&temp_file).is_err() && porcelain == false  {
+        println!("Failed removing resync temp file. You can remove it manually by deleting '.resync' in the project root.");
+    };
 
     if porcelain == false {
         println!("Searching for out of sync comments...");
@@ -99,7 +104,6 @@ fn main() {
     if matches.is_present("check-file") {
         let mut ignore_files: Vec<String> = Vec::new();
         let file = matches.value_of("check-file").unwrap(); // file is relative path
-        // get parent dir from working dir before doing this
         let full_path = Path::join(working_dir, file);
 
         checker.check_file(full_path, &mut ignore_files);
